@@ -1,0 +1,16 @@
+__pycache__/
+*.py[cod]
+.venv/
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+dist/
+build/
+.ipynb_checkpoints/
+.DS_Store
+
+# Datasets and run outputs stay local
+data/*
+!data/.gitkeep
+results/*
+!results/.gitkeep
