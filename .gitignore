@@ -31,8 +31,9 @@ build/
 .ipynb_checkpoints/
 .DS_Store
 
-# Run outputs stay local (upstream tracks data/)
+# Run outputs and simulated data stay local (upstream tracks the rest of data/)
 results/
+data/scMultiSim/
 
 # pixi environment
 .pixi/
