@@ -8,6 +8,7 @@ Keys: up/down or j/k move · enter opens the full log in less · r refreshes now
 """
 import curses
 import os
+import re
 import subprocess
 import sys
 import threading
@@ -20,6 +21,15 @@ import daic  # noqa: E402
 POLL_SECONDS = 20
 GROUPS = ["Running", "Waiting", "Failed", "Cancelled", "Completed"]
 FINISHED = {"Completed", "Cancelled"}
+
+
+ANSI = re.compile(r"\x1b\[[0-9;?]*[ -/]*[@-~]")
+
+
+def clean_line(line):
+    # progress bars rewrite a line with \r; keep what was shown last, drop colour codes and control characters
+    line = ANSI.sub("", line.split("\r")[-1]).replace("\t", "    ")
+    return "".join(c for c in line if c.isprintable())
 
 
 def group_of(state):
@@ -133,10 +143,6 @@ def draw(stdscr, app, colors):
 
     with app.lock:
         updated, error, log_text, status = app.updated, app.error, app.log_text, app.status
-    head = f" DAIC jobs · updated {updated or '…'} · every {POLL_SECONDS}s"
-    addstr(stdscr, 0, 0, head.ljust(w), curses.A_REVERSE | curses.A_BOLD)
-    if error:
-        addstr(stdscr, 0, len(head) + 2, f"refresh failed: {error}", curses.color_pair(colors["Failed"]) | curses.A_REVERSE)
 
     list_w = max(40, int(w * 0.55)) if w >= 100 else w
     body_h = h - 2
@@ -169,11 +175,16 @@ def draw(stdscr, app, colors):
         x = list_w + 1
         for y in range(1, h - 1):
             addstr(stdscr, y, list_w, "│", curses.A_DIM)
-        lines = log_text.splitlines()
+        lines = [clean_line(line) for line in log_text.splitlines()]
         addstr(stdscr, 1, x, f"Log · job {app.selected or ''}", curses.color_pair(colors["accent"]) | curses.A_BOLD)
         for i, text in enumerate(lines[-(h - 4):]):
             addstr(stdscr, i + 2, x, text)
 
+    # the bars go last, so nothing drawn above can overwrite them
+    head = f" DAIC jobs · updated {updated or '…'} · every {POLL_SECONDS}s"
+    addstr(stdscr, 0, 0, head.ljust(w), curses.A_REVERSE | curses.A_BOLD)
+    if error:
+        addstr(stdscr, 0, len(head) + 2, f"refresh failed: {error}", curses.color_pair(colors["Failed"]) | curses.A_REVERSE)
     keys = " ↑↓/jk move · enter full log · r refresh · a finished jobs · c cancel job · q quit"
     addstr(stdscr, h - 1, 0, (status or keys).ljust(w), curses.A_REVERSE)
     stdscr.refresh()
@@ -187,6 +198,7 @@ def open_full_log(stdscr, job_id):
         if path:
             subprocess.run(f"ssh -o BatchMode=yes {daic.HOST} \"cat '{daic.REPO}/{path}'\" | less +G", shell=True)
     finally:
+        stdscr.clear()  # force a full repaint after less
         stdscr.refresh()
 
 
