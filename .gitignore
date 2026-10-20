@@ -20,6 +20,5 @@ results/*
 
 # Apptainer
 *.sif
-.apptainer-cache/
 slurm/out/*
 !slurm/out/.gitkeep
