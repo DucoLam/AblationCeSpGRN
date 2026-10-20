@@ -21,7 +21,25 @@ TODO
 
 ## Setup
 
-TODO
+The environment is defined in `pixi.toml` and pinned in `pixi.lock`. Commit both.
+
+**Locally:** `pixi install`, then `pixi run python ...`.
+
+**On DAIC:** pixi is not installed there, so jobs run inside an Apptainer image (`container_pixi.def`) that holds the locked environment. Code is not baked in; it is mounted at run time, so only dependency changes need a rebuild.
+
+```bash
+# from the repo root, on DAIC
+sbatch slurm/build_container.sh                 # builds ablation-cespgrn.sif (rerun after pixi.toml/pixi.lock change)
+sbatch slurm/run.sh python path/to/script.py    # runs any command in the container
+```
+
+**Changing dependencies:** edit `pixi.toml`, then refresh the lock with the same pixi version as the image:
+
+```bash
+pixi update --no-install                                                                         # local pixi
+podman run --rm -v "$PWD":/app -w /app ghcr.io/prefix-dev/pixi:0.40.3 pixi update --no-install  # or via podman/docker
+apptainer exec docker://ghcr.io/prefix-dev/pixi:0.40.3 pixi update --no-install                # or on DAIC
+```
 
 ## Usage
 

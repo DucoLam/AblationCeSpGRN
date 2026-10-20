@@ -1,0 +1,25 @@
+# Apptainer image with the locked pixi environment. Code is not baked in;
+# it is bind-mounted at run time (see slurm/run.sh).
+# Rebuild when pixi.toml or pixi.lock change: sbatch slurm/build_container.sh
+
+Bootstrap: docker
+From: ghcr.io/prefix-dev/pixi:0.40.3
+
+%files
+    pixi.toml /opt/app/pixi.toml
+    pixi.lock /opt/app/pixi.lock
+
+%post
+    cd /opt/app
+    pixi install --locked
+
+    # Activate the environment on every `apptainer run`, so pixi is not needed at run time
+    printf '#!/bin/bash\n' > /opt/app/entrypoint.sh
+    pixi shell-hook -s bash --frozen >> /opt/app/entrypoint.sh
+    printf 'exec "$@"\n' >> /opt/app/entrypoint.sh
+    chmod +x /opt/app/entrypoint.sh
+
+    rm -rf /root/.cache/rattler
+
+%runscript
+    exec /opt/app/entrypoint.sh "$@"

@@ -14,3 +14,12 @@ data/*
 !data/.gitkeep
 results/*
 !results/.gitkeep
+
+# pixi environment
+.pixi/
+
+# Apptainer
+*.sif
+.apptainer-cache/
+slurm/out/*
+!slurm/out/.gitkeep
