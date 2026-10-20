@@ -10,7 +10,7 @@ Ablation benchmark of CeSpGRN, a method for inferring cell-specific gene regulat
 
 ## Background
 
-CeSpGRN: Zhang, Han, Song & Zhang, *Inferring cell-specific gene regulatory networks from single cell multi-omics and spatial data*, bioRxiv 2022.03.03.482887 (v3, 2023). Code: https://github.com/PeterZZQ/CeSpGRN
+Zhang, Z., Han, J., Song, L., & Zhang, X. (2026). CeSpGRN: inferring cell-specific gene regulatory networks from single-cell multi-omics and spatial data. *Bioinformatics*, 42(6), btag324. https://doi.org/10.1093/bioinformatics/btag324 (preprint: [bioRxiv 2022.03.03.482887](https://doi.org/10.1101/2022.03.03.482887); code: [PeterZZQ/CeSpGRN](https://github.com/PeterZZQ/CeSpGRN))
 
 CeSpGRN infers one GRN per cell, assuming that GRNs change smoothly along a trajectory or across space. For each cell *i* it estimates a precision matrix Θᵢ (genes × genes) by solving, with ADMM (paper Eq. 2):
 
@@ -42,13 +42,19 @@ The original upstream README is kept as [README.upstream.md](README.upstream.md)
 | `data/` | Upstream's example datasets |
 
 ## Values
-As noted from the Additional Supplementary Materials:
-seeds = {0,1,2}
-noise = {0.01, 0.1}
-#cells = 8000
-#genes = 110
 
-Metrics (AUPRC and Early Precision) are as noted in [Pratapa et al., 2020]
+Benchmark settings, taken from the paper's [supplementary data](https://academic.oup.com/bioinformatics/article/42/6/btag324/8699592) (`btag324_supplementary_data.pdf`):
+
+| Setting | Values |
+|---|---|
+| Seeds | 0, 1, 2 |
+| Noise | 0.01, 0.1 |
+| Cells | 8000 |
+| Genes | 110 |
+
+Metrics are AUPRC and Early Precision, as defined in Pratapa et al. (2020)[^pratapa].
+
+[^pratapa]: Pratapa, A., Jalihal, A. P., Law, J. N., Bharadwaj, A., & Murali, T. M. (2020). Benchmarking algorithms for gene regulatory network inference from single-cell transcriptomic data. *Nature Methods*, 17(2), 147–154. https://doi.org/10.1038/s41592-019-0690-6
 
 ## Ablations
 
