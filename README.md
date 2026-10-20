@@ -21,24 +21,22 @@ TODO
 
 ## Setup
 
-The environment is defined in `pixi.toml` and pinned in `pixi.lock`. Commit both.
-
-**Locally:** `pixi install`, then `pixi run python ...`.
-
-**On DAIC:** pixi is not installed there, so jobs run inside an Apptainer image (`container_pixi.def`) that holds the locked environment. Code is not baked in; it is mounted at run time, so only dependency changes need a rebuild.
+Everything runs on DAIC. The environment (Python, PyTorch with CUDA) is defined in `pixi.toml`, pinned in `pixi.lock`, and baked into an Apptainer image (`container_pixi.def`). Code is not baked in; it is mounted at run time, so only dependency changes need a rebuild.
 
 ```bash
 # from the repo root, on DAIC
-sbatch slurm/build_container.sh                 # builds ablation-cespgrn.sif (rerun after pixi.toml/pixi.lock change)
-sbatch slurm/run.sh python path/to/script.py    # runs any command in the container
+sbatch slurm/build_container.sh                             # builds ablation-cespgrn.sif (rerun after pixi.toml/pixi.lock change)
+sbatch -J my-run slurm/run.sh python path/to/script.py      # runs any command in the container
+sbatch -J my-run --gres=gpu:1 slurm/run.sh python ...       # same, on a GPU
 ```
 
-**Changing dependencies:** edit `pixi.toml`, then refresh the lock with the same pixi version as the image:
+Logs go to `slurm/logs/<date>/<time>_<job name>_<job id>.log`.
+
+**Changing dependencies:** edit `pixi.toml`, refresh the lock with the same pixi version as the image, commit both, then rebuild:
 
 ```bash
-pixi update --no-install                                                                         # local pixi
-podman run --rm -v "$PWD":/app -w /app ghcr.io/prefix-dev/pixi:0.40.3 pixi update --no-install  # or via podman/docker
-apptainer exec docker://ghcr.io/prefix-dev/pixi:0.40.3 pixi update --no-install                # or on DAIC
+apptainer exec docker://ghcr.io/prefix-dev/pixi:0.40.3 pixi update --no-install    # on DAIC
+podman run --rm -v "$PWD":/app -w /app ghcr.io/prefix-dev/pixi:0.40.3 pixi update --no-install    # or locally with podman/docker
 ```
 
 ## Usage

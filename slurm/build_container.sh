@@ -2,9 +2,9 @@
 #SBATCH --job-name=build-container
 #SBATCH --partition=general
 #SBATCH --qos=short
-#SBATCH --time=01:00:00
+#SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=4
-#SBATCH --mem=16G
+#SBATCH --mem=32G
 #SBATCH --output=slurm/logs/.slurm/%j.log
 
 # Build ablation-cespgrn.sif on DAIC from container_pixi.def.
