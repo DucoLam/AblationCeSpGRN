@@ -23,4 +23,6 @@ export APPTAINER_TMPDIR=/tmp/$USER/apptainer-tmp
 mkdir -p "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR"
 
 apptainer build --force "/tmp/$USER/$SIF" container_pixi.def
-mv "/tmp/$USER/$SIF" "$SIF"
+# Plain cp, not mv: mv tries to preserve permissions, which umbrella refuses
+cp "/tmp/$USER/$SIF" "$SIF"
+rm "/tmp/$USER/$SIF"
