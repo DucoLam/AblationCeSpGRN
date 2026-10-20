@@ -1,7 +1,7 @@
 [workspace]
 name = "ablation-cespgrn"
 description = "Ablation benchmark of CeSpGRN"
-channels = ["conda-forge"]
+channels = ["conda-forge", "bioconda"]
 platforms = ["linux-64"]  # DAIC only; the environment is used through the Apptainer image
 version = "0.1.0"
 
@@ -21,3 +21,5 @@ pytorch-gpu = "*"
 networkx = "*"     # upstream src/kernel.py
 matplotlib = "*"   # imported at the top of upstream src/g_admm.py
 umap-learn = "*"   # upstream demo.py
+r-base = "*"
+bioconductor-scmultisim = "*"   # simulated benchmark data (paper Note 1.8)
