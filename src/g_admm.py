@@ -21,8 +21,8 @@ torch_sqrtm = MatrixSquareRoot.apply
 
 def isPSD(A, tol=1e-5):
     # E,V = eigh(A)
-    E, V = torch.eig(A, eigenvectors = False)
-    E = E[:, 0].squeeze()
+    # torch.eig was removed from PyTorch; linalg.eigvals gives the same eigenvalues (real part kept, as before)
+    E = torch.linalg.eigvals(A).real.squeeze()
     # print('min_eig = ', np.min(E) , 'max_eig = ', np.max(E), ' min_diag = ', np.min(np.diag(A)))
     # make sure symmetric positive definite
     return torch.all(E > -tol) & torch.allclose(A, A.T, atol = tol), torch.min(E)
@@ -34,8 +34,9 @@ def find_clostest_PSD(A):
     """
     # cannot make sure that U = V.t() with svd,
     # U, S, V = torch.svd(A, some=False)
-    S, U = torch.eig(A, eigenvectors = True)
-    S = S[:, 0]
+    # torch.eig was removed from PyTorch; linalg.eig gives the same decomposition (real parts kept, as before)
+    S, U = torch.linalg.eig(A)
+    S, U = S.real, U.real
     S[S <= 0] = 1e-3
     return U @ torch.diag(S) @ U.t()
 
@@ -304,7 +305,7 @@ class G_admm_minibatch():
             # initialize mini-batch, Z of the shape (batch_size, ngenes, ngenes)
             Z = torch.diag_embed(1/(torch.diagonal(w_empir_cov, offset=0, dim1=-2, dim2=-1) + theta_init_offset))
             # make Z positive definite matrix
-            ll = torch.cholesky(Z)
+            ll = torch.linalg.cholesky(Z)
             Z = torch.matmul(ll, ll.transpose(-1, -2))
             U = torch.zeros(Z.shape).to(self.device)
             I = torch.eye(self.ngenes).expand(Z.shape).to(self.device)
@@ -542,7 +543,7 @@ class G_admm_mask():
             # initialize mini-batch, Z of the shape (batch_size, ngenes, ngenes)
             Z = torch.diag_embed(1/(torch.diagonal(w_empir_cov, offset=0, dim1=-2, dim2=-1) + theta_init_offset))
             # make Z positive definite matrix
-            ll = torch.cholesky(Z)
+            ll = torch.linalg.cholesky(Z)
             Z = torch.matmul(ll, ll.transpose(-1, -2))
             U = torch.zeros(Z.shape).to(self.device)
             I = torch.eye(self.ngenes).expand(Z.shape).to(self.device)
