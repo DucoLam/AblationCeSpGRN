@@ -221,7 +221,7 @@ def compute_auc_ori(estm_adj, gt_adj, directed = False):
     else:
         # assert np.abs(np.max(estm_norm_adj) - 1) < 1e-4
         if directed == False:
-            gt_adj = ((gt_adj + gt_adj.T) > 0).astype(np.int)
+            gt_adj = ((gt_adj + gt_adj.T) > 0).astype(int)
         np.fill_diagonal(gt_adj, 0)
         np.fill_diagonal(estm_norm_adj, 0)
         rows, cols = np.where(gt_adj != 0)
