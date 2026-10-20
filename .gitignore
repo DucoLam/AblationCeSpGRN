@@ -20,5 +20,9 @@ results/*
 
 # Apptainer
 *.sif
-slurm/out/*
-!slurm/out/.gitkeep
+
+# SLURM logs (slurm/logs/.slurm must exist before sbatch)
+slurm/logs/*
+!slurm/logs/.slurm/
+slurm/logs/.slurm/*
+!slurm/logs/.slurm/.gitkeep
