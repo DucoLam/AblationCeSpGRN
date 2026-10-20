@@ -66,12 +66,12 @@ Everything runs on DAIC. The environment (Python, PyTorch with CUDA) is defined 
 
 ```bash
 # from the repo root, on DAIC
-sbatch slurm/build_container.sh                             # builds ablation-cespgrn.sif (rerun after pixi.toml/pixi.lock change)
-sbatch -J my-run slurm/run.sh python path/to/script.py      # runs any command in the container
-sbatch -J my-run --gres=gpu:1 slurm/run.sh python ...       # same, on a GPU
+bash slurm/sbatch.sh slurm/build_container.sh                          # builds ablation-cespgrn.sif (rerun after pixi.toml/pixi.lock change)
+bash slurm/sbatch.sh -J my-run slurm/run.sh python path/to/script.py   # runs any command in the container
+bash slurm/sbatch.sh -J my-run --gres=gpu:1 slurm/run.sh python ...    # same, on a GPU
 ```
 
-Logs go to `slurm/logs/<date>/<time>_<job name>_<job id>.log`.
+`slurm/sbatch.sh` is `sbatch` with a readable log: `slurm/logs/<date>/<time>_<job name>_<job id>.log`, written by SLURM itself so tools like lazyslurm find it.
 
 **Changing dependencies:** edit `pixi.toml`, refresh the lock with the same pixi version as the image, commit both, then rebuild:
 

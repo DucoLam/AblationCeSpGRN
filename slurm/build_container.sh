@@ -5,22 +5,17 @@
 #SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
-#SBATCH --output=slurm/logs/.slurm/%j.log
+#SBATCH --output=slurm/logs/%x_%j.log
 
 # Build ablation-cespgrn.sif on DAIC from container_pixi.def.
 # Builds on node-local /tmp, then moves the image into the repo root.
 # The cache also lives on /tmp: umbrella is a Windows share where chmod is
 # not permitted, which breaks Apptainer's blob cache.
-# Output goes to slurm/logs/<date>/<time>_build-container_<job id>.log.
 #
 # Usage (from the repo root):
-#   sbatch slurm/build_container.sh
+#   bash slurm/sbatch.sh slurm/build_container.sh
 
 set -euo pipefail
-
-LOG_DIR=slurm/logs/$(date +%Y-%m-%d)
-mkdir -p "$LOG_DIR"
-exec > "$LOG_DIR/$(date +%H%M%S)_${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log" 2>&1
 
 SIF=ablation-cespgrn.sif
 export APPTAINER_CACHEDIR=/tmp/$USER/apptainer-cache

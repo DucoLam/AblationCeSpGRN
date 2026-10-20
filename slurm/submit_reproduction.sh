@@ -20,8 +20,11 @@ GPU=${GPU:-1}
 GPU_FLAG=()
 [ "$GPU" = 1 ] && GPU_FLAG=(--gres=gpu:1)
 
+log_dir=slurm/logs/$(date +%Y-%m-%d)
+mkdir -p "$log_dir"
+
 submit() {
-  sbatch --parsable "$@"
+  sbatch --parsable --output="$log_dir/$(date +%H%M%S)_%x_%j.log" "$@"
 }
 
 for seed in $SEEDS; do

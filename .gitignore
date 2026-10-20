@@ -42,8 +42,6 @@ data/scMultiSim/
 # Apptainer
 *.sif
 
-# SLURM logs (slurm/logs/.slurm must exist before sbatch)
+# SLURM logs (slurm/logs must exist before sbatch)
 slurm/logs/*
-!slurm/logs/.slurm/
-slurm/logs/.slurm/*
-!slurm/logs/.slurm/.gitkeep
+!slurm/logs/.gitkeep

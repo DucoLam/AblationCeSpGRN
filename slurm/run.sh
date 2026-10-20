@@ -5,20 +5,16 @@
 #SBATCH --time=01:00:00
 #SBATCH --cpus-per-task=2
 #SBATCH --mem=8G
-#SBATCH --output=slurm/logs/.slurm/%j.log
+#SBATCH --output=slurm/logs/%x_%j.log
 
 # Run any command inside the container, with the repo mounted at /workspace.
-# Output goes to slurm/logs/<date>/<time>_<job name>_<job id>.log; name the
-# job with -J so the log says what it was.
+# Submit through slurm/sbatch.sh for a log at slurm/logs/<date>/<time>_<job name>_<job id>.log;
+# name the job with -J so the log says what it was. Plain sbatch logs to slurm/logs/<job name>_<job id>.log.
 #
 # Usage (from the repo root):
-#   sbatch -J kernel-sweep slurm/run.sh python path/to/script.py --arg value
-#   sbatch --qos=medium --time=12:00:00 slurm/run.sh python ...   # override resources
-#   sbatch --gres=gpu:1 slurm/run.sh python ...                    # on a GPU
-
-LOG_DIR=slurm/logs/$(date +%Y-%m-%d)
-mkdir -p "$LOG_DIR"
-exec > "$LOG_DIR/$(date +%H%M%S)_${SLURM_JOB_NAME}_${SLURM_JOB_ID}.log" 2>&1
+#   bash slurm/sbatch.sh -J kernel-sweep slurm/run.sh python path/to/script.py --arg value
+#   bash slurm/sbatch.sh --qos=medium --time=12:00:00 slurm/run.sh python ...   # override resources
+#   bash slurm/sbatch.sh --gres=gpu:1 slurm/run.sh python ...                    # on a GPU
 
 SIF=${SIF:-ablation-cespgrn.sif}
 
