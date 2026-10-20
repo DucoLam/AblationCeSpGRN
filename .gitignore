@@ -30,6 +30,7 @@ dist/
 build/
 .ipynb_checkpoints/
 .DS_Store
+.env
 
 # Run outputs and simulated data stay local (upstream tracks the rest of data/)
 results/

@@ -144,7 +144,7 @@ def _compute_auc(estm_adj, gt_adj):
         if len(set(gt_adj.reshape(-1,))) == 1:
             prec, recall = np.array([0., 1.]), np.array([1., 0.])
         else:
-            prec, recall, thresholds = precision_recall_curve(y_true=gt_adj.reshape(-1,), probas_pred=estm_adj.reshape(-1,), pos_label=1)
+            prec, recall, thresholds = precision_recall_curve(y_true=gt_adj.reshape(-1,), y_score=estm_adj.reshape(-1,), pos_label=1)
 
         # the same
         # AUPRC = average_precision_score(gt_adj.reshape(-1,), estm_adj.reshape(-1,)) 
@@ -188,7 +188,7 @@ def compute_auc(estm_adj, gt_adj, directed = False):
         if len(set(gt_adj.reshape(-1,))) == 1:
             prec, recall = np.array([0., 1.]), np.array([1., 0.])
         else:
-            prec, recall, thresholds = precision_recall_curve(y_true=gt_adj.reshape(-1,), probas_pred=estm_norm_adj.reshape(-1,), pos_label=1)
+            prec, recall, thresholds = precision_recall_curve(y_true=gt_adj.reshape(-1,), y_score=estm_norm_adj.reshape(-1,), pos_label=1)
 
         # the same
         # AUPRC = average_precision_score(gt_adj.reshape(-1,), estm_norm_adj.reshape(-1,)) 
@@ -348,7 +348,7 @@ directed = True, selfEdges = True):
                                      y_score=outDF['PredEdges'], pos_label=1)
 
     prec, recall, thresholds = precision_recall_curve(y_true=outDF['TrueEdges'],
-                                                      probas_pred=outDF['PredEdges'], pos_label=1)
+                                                      y_score=outDF['PredEdges'], pos_label=1)
     
     return prec, recall, fpr, tpr, auc(recall, prec), auc(fpr, tpr)
 
