@@ -8,6 +8,8 @@
 #   bash slurm/submit_reproduction.sh                                   # full: 3 seeds x 2 noise levels, 8000 cells
 #   NUM_CELLS=400 SEEDS=0 FPS=0.01 bash slurm/submit_reproduction.sh    # quick end-to-end check
 #   GPU=0 bash slurm/submit_reproduction.sh                             # CeSpGRN on CPU when GPUs are scarce
+#   NUM_CELLS=400 SEEDS=0 FPS=0.01 GPU=0 QOS=short TIME=00:30:00 CPUS=4 MEM=8G bash slurm/submit_reproduction.sh
+#                                         # small CeSpGRN jobs start much sooner when the queue is full
 
 set -euo pipefail
 
@@ -16,6 +18,11 @@ SEEDS=${SEEDS:-"0 1 2"}
 FPS=${FPS:-"0.01 0.1"}
 BANDWIDTHS=${BANDWIDTHS:-"0.01 0.1 1 10"}
 GPU=${GPU:-1}
+# resources for each CeSpGRN job (one per bandwidth)
+QOS=${QOS:-medium}
+TIME=${TIME:-08:00:00}
+CPUS=${CPUS:-16}
+MEM=${MEM:-64G}
 
 GPU_FLAG=()
 [ "$GPU" = 1 ] && GPU_FLAG=(--gres=gpu:1)
@@ -46,7 +53,7 @@ for seed in $SEEDS; do
       cespgrn_jobs=()
       for bw in $BANDWIDTHS; do
         cespgrn_jobs+=("$(submit -J "cespgrn-${fp}-s${seed}-b${beta}-bw${bw}" --dependency=afterok:"$build" \
-          --qos=medium --time=08:00:00 --cpus-per-task=16 --mem=64G ${GPU_FLAG[@]+"${GPU_FLAG[@]}"} \
+          --qos="$QOS" --time="$TIME" --cpus-per-task="$CPUS" --mem="$MEM" ${GPU_FLAG[@]+"${GPU_FLAG[@]}"} \
           slurm/run.sh python test/scripts_ablation/run_cespgrn.py --data "$data" --out "$run" \
             --bandwidth "$bw" --beta "$beta" --prior atac)")
       done
