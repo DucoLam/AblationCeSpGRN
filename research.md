@@ -37,7 +37,7 @@ Not yet comparable with the paper: it uses 1/20 of the cells, and our prior is w
 
 More noise lets through about 5 times more edges, which catches about 3 times more true edges at half the precision.
 
-**Full reproduction of the paper's main figure** (Fig. 2b): queued on the cluster.
+**Full reproduction of the paper's main figure** (Fig. 2b): running on the cluster.
 
 ## Plan
 
@@ -45,7 +45,7 @@ After experiment 1, everything runs on one dataset (seed 0, noise 0.01). We add 
 
 | # | Experiment | Compute | Status |
 |---|---|---|---|
-| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | queued |
+| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | running |
 | 2 | Score the ATAC prior alone, without RNA | CPU | planned |
 | 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | planned |
 | 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |
