@@ -41,16 +41,20 @@ More noise lets through about 5 times more edges, which catches about 3 times mo
 
 ## Plan
 
-| # | Experiment | Status |
-|---|---|---|
-| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | queued |
-| 2 | Score the ATAC prior alone, without RNA | part of every run |
-| 3 | Remove the RNA signal: shuffled RNA, plain correlation, random weights inside the prior | planned |
-| 4 | Test the soft penalty and the hard filter separately, then sweep β | planned |
-| 5 | Make the prior gradually worse and compare CeSpGRN's score with the prior's | planned |
-| 6 | Score only edges inside the prior, to see what the RNA adds | planned |
-| 7 | Give simpler methods (GENIE3, correlation) the same prior and filter | planned |
-| 8 | Rescore everything with standard AUPRC | planned |
+After experiment 1, everything runs on one dataset (seed 0, noise 0.01). We add seeds only if a result is borderline. Experiments 3 and 5 share one GPU job; the rest reuse experiment 1's saved results and run on CPU.
+
+| # | Experiment | Compute | Status |
+|---|---|---|---|
+| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | queued |
+| 2 | Score the ATAC prior alone, without RNA | CPU | planned |
+| 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | planned |
+| 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |
+| 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | planned |
+| 6 | Score only edges inside the prior, to see what the RNA adds | CPU | planned |
+| 7 | Give plain correlation the same prior and filter | CPU | planned |
+| 8 | Rescore everything with standard AUPRC | CPU | planned |
+
+Dropped for now: the β sweep (the paper's Fig. S4a already shows it is flat), and GENIE3 as a second baseline (only if experiment 7 is unclear).
 
 ## Setup
 
