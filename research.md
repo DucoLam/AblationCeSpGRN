@@ -37,13 +37,13 @@ Not yet comparable with the paper: it uses 1/20 of the cells, and our prior is w
 
 More noise lets through about 5 times more edges, which catches about 3 times more true edges at half the precision.
 
-**Full reproduction of the paper's main figure** (Fig. 2b): running.
+**Full reproduction of the paper's main figure** (Fig. 2b): queued on the cluster.
 
 ## Plan
 
 | # | Experiment | Status |
 |---|---|---|
-| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | running |
+| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | queued |
 | 2 | Score the ATAC prior alone, without RNA | part of every run |
 | 3 | Remove the RNA signal: shuffled RNA, plain correlation, random weights inside the prior | planned |
 | 4 | Test the soft penalty and the hard filter separately, then sweep β | planned |

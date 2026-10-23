@@ -89,11 +89,11 @@ All our code now lives in `ablation/`, separate from upstream's; see [`ablation/
 | `slurm/`, `tools/`, `pixi.toml`, `pixi.lock`, `container_pixi.def` | `ablation/` |
 | `data/scMultiSim/`, `results/` (on DAIC) | `ablation/data/`, `ablation/results/` |
 
-The full run above still uses the old layout on DAIC; DAIC switches over once it has finished.
+DAIC now uses this layout too, including for the resubmitted run below.
 
 ### 2026-10-23 · Full run resubmitted as one GPU job per dataset
 
-GPU slots are scarce, so the 60 waiting jobs were cancelled (simulate and build had finished) and the run resubmitted as 6 GPU jobs, one per dataset, each running all 4 σ × 4 λ for both β and scoring both. Results are unchanged by two shortcuts in `ablation/pipeline/3_run_cespgrn.py`:
+GPU slots are scarce, so the 60 waiting jobs were cancelled (simulate and build had finished) and the run resubmitted as 6 GPU jobs (12999995–13000000), one per dataset, each running all 4 σ × 4 λ for both β and scoring both. Results are unchanged by two shortcuts in `ablation/pipeline/3_run_cespgrn.py`:
 
 - The kernel, covariance and kernel-weighted covariance depend only on σ, so they are computed once per σ and shared by every λ and β. For β = 0 the mask is passed but multiplied by β = 0 in every update, and the cut only runs for β > 0, which is what upstream gets by passing no mask.
 - Upstream's `G_admm_mask.train` recomputes the partial correlations of all cells after every batch of 512 cells (16 times at 8000 cells) and keeps only the last; the runner skips the intermediate passes and calls the same `construct_weighted_G` once on the final result.
