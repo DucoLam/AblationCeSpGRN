@@ -2,10 +2,10 @@
 Local dashboard for your DAIC jobs. Runs on your Mac, polls SLURM over SSH every 20 seconds,
 and serves a page at http://localhost:8765 (bound to this machine only).
 
-DAIC access (shared SSH connection, password from .env) lives in tools/daic.py.
+DAIC access (shared SSH connection, password from .env) lives in ablation/tools/daic.py.
 
 Usage (from the repo root, with Python 3.9+ and sshpass installed):
-    python3 tools/job_dashboard.py
+    python3 ablation/tools/job_dashboard.py
 """
 import json
 import os

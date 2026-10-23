@@ -1,7 +1,7 @@
 """
 Terminal UI for your DAIC jobs, in the spirit of lazydocker. Refreshes every 20 seconds.
 
-    python3 tools/lazyjobs.py
+    python3 ablation/tools/lazyjobs.py
 
 Keys: up/down or j/k move · enter opens the full log in less · r refreshes now
       a shows or hides finished jobs · c cancels the selected job (asks first) · q quits

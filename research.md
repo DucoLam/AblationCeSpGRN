@@ -84,10 +84,27 @@ Our reconstructed prior has precision 0.55 and recall 0.23 against the ground tr
 
 3 seeds × noise 0.01/0.1, 8000 cells, β = 1 (Fig. 2b) and β = 0 (Fig. S3c): 69 jobs, 12999921–12999989 (list in `results/full_run_jobs.txt` on DAIC).
 
+### 2026-10-23 · Our code moved to `ablation/`
+
+All our code now lives in `ablation/`, separate from upstream's; see [`ablation/README.md`](ablation/README.md) for what runs in which order. Paths in the entries above refer to the old layout:
+
+| Before | Now |
+|---|---|
+| `simulator/scmultisim/simulate.R` | `ablation/pipeline/1_simulate.R` |
+| `simulator/scmultisim/build_dataset.py` | `ablation/pipeline/2_build_dataset.py` |
+| `test/scripts_ablation/run_cespgrn.py` | `ablation/pipeline/3_run_cespgrn.py` |
+| `test/scripts_ablation/ensemble.py` | `ablation/pipeline/4_ensemble.py` |
+| `src/bmk.py`, `src/cov.py` | `ablation/lib/` |
+| `slurm/`, `tools/`, `pixi.toml`, `pixi.lock`, `container_pixi.def` | `ablation/` |
+| `data/scMultiSim/`, `results/` (on DAIC) | `ablation/data/`, `ablation/results/` |
+
+The full run above still uses the old layout on DAIC; DAIC switches over once it has finished.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
 
 - `src/g_admm.py`: `torch.eig` → `torch.linalg.eig` / `eigvals`, `torch.cholesky` → `torch.linalg.cholesky` (removed from PyTorch; same results).
 - `src/bmk_beeline.py`: `precision_recall_curve(probas_pred=…)` → `y_score=…` and `np.int` → `int` (removed from scikit-learn / NumPy; same results).
-- Added `src/bmk.py` and `src/cov.py`, which upstream's scripts import but were never published. `cov.est_cov_para` follows the commented-out version in `g_admm.py`; `bmk.calc_scores_para` uses upstream's own metrics.
+
+Upstream's scripts also import `bmk` and `cov`, which were never published. Our versions live in `ablation/lib/` (not in `src/`): `cov.est_cov_para` follows the commented-out version in `g_admm.py`; `bmk.calc_scores_para` uses upstream's own metrics.

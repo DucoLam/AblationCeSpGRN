@@ -1,13 +1,13 @@
 # Apptainer image with the locked pixi environment. Code is not baked in;
-# it is bind-mounted at run time (see slurm/run.sh).
-# Rebuild when pixi.toml or pixi.lock change: sbatch slurm/build_container.sh
+# it is bind-mounted at run time (see ablation/slurm/run.sh).
+# Rebuild when pixi.toml or pixi.lock change (from the repo root): bash ablation/slurm/sbatch.sh ablation/slurm/build_container.sh
 
 Bootstrap: docker
 From: ghcr.io/prefix-dev/pixi:0.40.3
 
 %files
-    pixi.toml /opt/app/pixi.toml
-    pixi.lock /opt/app/pixi.lock
+    ablation/pixi.toml /opt/app/pixi.toml
+    ablation/pixi.lock /opt/app/pixi.lock
 
 %post
     cd /opt/app

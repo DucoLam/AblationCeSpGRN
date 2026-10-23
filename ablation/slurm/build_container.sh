@@ -5,24 +5,25 @@
 #SBATCH --time=02:00:00
 #SBATCH --cpus-per-task=4
 #SBATCH --mem=32G
-#SBATCH --output=slurm/logs/%x_%j.log
+#SBATCH --output=ablation/slurm/logs/%x_%j.log
 
-# Build ablation-cespgrn.sif on DAIC from container_pixi.def.
-# Builds on node-local /tmp, then moves the image into the repo root.
+# Build ablation/ablation-cespgrn.sif on DAIC from ablation/container_pixi.def.
+# Builds on node-local /tmp, then copies the image into ablation/.
 # The cache also lives on /tmp: umbrella is a Windows share where chmod is
 # not permitted, which breaks Apptainer's blob cache.
 #
 # Usage (from the repo root):
-#   bash slurm/sbatch.sh slurm/build_container.sh
+#   bash ablation/slurm/sbatch.sh ablation/slurm/build_container.sh
 
 set -euo pipefail
 
 SIF=ablation-cespgrn.sif
+OUT=ablation/$SIF
 export APPTAINER_CACHEDIR=/tmp/$USER/apptainer-cache
 export APPTAINER_TMPDIR=/tmp/$USER/apptainer-tmp
 mkdir -p "$APPTAINER_CACHEDIR" "$APPTAINER_TMPDIR"
 
-apptainer build --force "/tmp/$USER/$SIF" container_pixi.def
+apptainer build --force "/tmp/$USER/$SIF" ablation/container_pixi.def
 # Plain cp, not mv: mv tries to preserve permissions, which umbrella refuses
-cp "/tmp/$USER/$SIF" "$SIF"
+cp "/tmp/$USER/$SIF" "$OUT"
 rm "/tmp/$USER/$SIF"

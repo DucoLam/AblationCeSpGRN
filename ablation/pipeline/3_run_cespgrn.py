@@ -1,14 +1,14 @@
 """
 Run CeSpGRN on one simulated dataset for one kernel bandwidth and all sparsity weights,
 exactly as upstream test/scripts_scmultisim/test_scmultisim.py does, and save the sum of the
-resulting partial-correlation graphs (before the final prior cut) for ensemble.py.
+resulting partial-correlation graphs (before the final prior cut) for 4_ensemble.py.
 
 Upstream's ensemble runs 4 bandwidths x 4 lambdas. One job per bandwidth keeps each job's
 covariance (the slow, CPU-bound step) in memory while its 4 lambdas run on the GPU.
 
 Usage (from the repo root):
-    python test/scripts_ablation/run_cespgrn.py --data data/scMultiSim/<dataset> \
-        --out results/scmultisim/<dataset>/<run> --bandwidth 0.1 --beta 1 --prior atac
+    python ablation/pipeline/3_run_cespgrn.py --data ablation/data/scMultiSim/<dataset> \
+        --out ablation/results/scmultisim/<dataset>/<run> --bandwidth 0.1 --beta 1 --prior atac
 """
 import argparse
 import json
@@ -16,7 +16,10 @@ import os
 import sys
 import time
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
+# upstream CeSpGRN code (src/) and our replacements for its unpublished modules (ablation/lib/)
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(HERE, "../../src"))
+sys.path.append(os.path.join(HERE, "../lib"))
 
 import numpy as np
 import torch

@@ -7,7 +7,7 @@
 #
 # Noise (fp) only affects the prior, so one simulation per seed serves both noise levels.
 #
-# Usage: Rscript simulator/scmultisim/simulate.R <seed> <out_dir> [num_cells]
+# Usage (from the repo root): Rscript ablation/pipeline/1_simulate.R <seed> <out_dir> [num_cells]
 
 suppressPackageStartupMessages(library(scMultiSim))
 

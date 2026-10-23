@@ -1,5 +1,5 @@
 """
-Turn one raw scMultiSim simulation (simulate.R output) into a CeSpGRN benchmark dataset:
+Turn one raw scMultiSim simulation (1_simulate.R output) into a CeSpGRN benchmark dataset:
 ground-truth GRNs, the per-cell ATAC prior with false-positive noise, and the TF prior.
 
 The ATAC prior follows paper Section 2.3 and Fig. S1. A TF-target edge is allowed in cell i
@@ -38,7 +38,7 @@ def read_matrix(path):
 
 def main():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--raw", required=True, help="simulate.R output directory")
+    parser.add_argument("--raw", required=True, help="1_simulate.R output directory")
     parser.add_argument("--out", required=True)
     parser.add_argument("--fp", type=float, required=True, help="noise level, e.g. 0.01 or 0.1")
     parser.add_argument("--seed", type=int, required=True)

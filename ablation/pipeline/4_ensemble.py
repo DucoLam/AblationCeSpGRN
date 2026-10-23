@@ -1,11 +1,11 @@
 """
-Average the per-bandwidth runs of run_cespgrn.py into upstream's ensemble GRN, apply the same
+Average the per-bandwidth runs of 3_run_cespgrn.py into upstream's ensemble GRN, apply the same
 final prior cut as upstream (test_scmultisim.py lines 222-225), and score every cell.
 Also scores the prior on its own, as upstream's eval_scores.py does ("Prior (ATAC)").
 
 Usage (from the repo root):
-    python test/scripts_ablation/ensemble.py --data data/scMultiSim/<dataset> \
-        --run results/scmultisim/<dataset>/<run> --model "CeSpGRN (ATAC)"
+    python ablation/pipeline/4_ensemble.py --data ablation/data/scMultiSim/<dataset> \
+        --run ablation/results/scmultisim/<dataset>/<run> --model "CeSpGRN (ATAC)"
 """
 import argparse
 import glob
@@ -13,7 +13,10 @@ import json
 import os
 import sys
 
-sys.path.append(os.path.join(os.path.dirname(__file__), "../../src"))
+# upstream CeSpGRN code (src/) and our replacements for its unpublished modules (ablation/lib/)
+HERE = os.path.dirname(os.path.abspath(__file__))
+sys.path.append(os.path.join(HERE, "../../src"))
+sys.path.append(os.path.join(HERE, "../lib"))
 
 import numpy as np
 import pandas as pd

@@ -10,7 +10,7 @@ from datetime import datetime, timedelta
 HOST = os.environ.get("DAIC_HOST", "daic")
 REPO = os.environ.get("DAIC_REPO", "/tudelft.net/staff-umbrella/ScReNI/AblationCeSpGRN")
 HISTORY_DAYS = 2
-ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", ".env")
+ENV_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), "..", "..", ".env")
 
 
 def read_password():
@@ -72,7 +72,7 @@ def fetch_jobs():
 def log_path(job_id):
     if not job_id.isdigit():
         raise ValueError("bad job id")
-    return remote(f"cd {REPO} && ls -t slurm/logs/*/*_{job_id}.log slurm/logs/*_{job_id}.log 2>/dev/null | head -1").strip()
+    return remote(f"cd {REPO} && ls -t ablation/slurm/logs/*/*_{job_id}.log ablation/slurm/logs/*_{job_id}.log slurm/logs/*/*_{job_id}.log 2>/dev/null | head -1").strip()
 
 
 def job_log(job_id, lines=80):
