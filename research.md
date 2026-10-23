@@ -10,7 +10,7 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Supplement: `btag32
 
 | # | Experiment | Status |
 |---|---|---|
-| 1 | Reproduce Fig. 2b (3 seeds × noise 0.01/0.1, 8000 cells) with upstream's method and scoring | running |
+| 1 | Reproduce Fig. 2b (3 seeds × noise 0.01/0.1, 8000 cells) with upstream's method and scoring | queued |
 | 2 | Score the ATAC prior alone, no RNA | in every run |
 | 3 | Take away the RNA signal: shuffled RNA, correlation stand-in, random weights inside the prior | planned |
 | 4 | Separate the soft β penalty from the hard cut (2 × 2, then a β sweep) | planned |
@@ -99,6 +99,13 @@ All our code now lives in `ablation/`, separate from upstream's; see [`ablation/
 | `data/scMultiSim/`, `results/` (on DAIC) | `ablation/data/`, `ablation/results/` |
 
 The full run above still uses the old layout on DAIC; DAIC switches over once it has finished.
+
+### 2026-10-23 · Full run resubmitted as one GPU job per dataset
+
+GPU slots are scarce, so the 60 waiting jobs were cancelled (simulate and build had finished) and the run resubmitted as 6 GPU jobs, one per dataset, each running all 4 σ × 4 λ for both β and scoring both. Results are unchanged by two shortcuts in `ablation/pipeline/3_run_cespgrn.py`:
+
+- The kernel, covariance and kernel-weighted covariance depend only on σ, so they are computed once per σ and shared by every λ and β. For β = 0 the mask is passed but multiplied by β = 0 in every update, and the cut only runs for β > 0, which is what upstream gets by passing no mask.
+- Upstream's `G_admm_mask.train` recomputes the partial correlations of all cells after every batch of 512 cells (16 times at 8000 cells) and keeps only the last; the runner skips the intermediate passes and calls the same `construct_weighted_G` once on the final result.
 
 ### 2026-10-23 · Our noise model makes the noisy prior denser, not just worse
 

@@ -6,13 +6,13 @@ All commands run **from the repo root**, so the container sees both upstream's c
 
 ## What runs, in order
 
-The reproduction of the paper's simulated benchmark (Fig. 2b) and its β ablation (Fig. S3c). `slurm/submit_reproduction.sh` submits these steps as a chain of SLURM jobs.
+The reproduction of the paper's simulated benchmark (Fig. 2b) and its β ablation (Fig. S3c). `slurm/submit_reproduction.sh` submits them as few jobs as possible: one CPU job per seed for steps 1–2 (only if the data is missing), and one GPU job per dataset for steps 3–4 ([`pipeline/run_dataset.sh`](pipeline/run_dataset.sh)).
 
 | Step | Our script | What it does | Upstream code it calls |
 |---|---|---|---|
 | 1 | [`pipeline/1_simulate.R`](pipeline/1_simulate.R) | Simulates paired RNA + ATAC data and a true GRN per cell with scMultiSim (paper Note 1.8) | none (scMultiSim) |
 | 2 | [`pipeline/2_build_dataset.py`](pipeline/2_build_dataset.py) | Builds the ground truth, the per-cell ATAC prior with noise, and the TF prior (paper Section 2.3, Fig. S1) | none (authors' version unpublished) |
-| 3 | [`pipeline/3_run_cespgrn.py`](pipeline/3_run_cespgrn.py) | Runs CeSpGRN for one kernel bandwidth and 4 sparsity weights λ, as upstream's `test_scmultisim.py` | `kernel.calc_kernel_neigh`, `g_admm.G_admm_mask` (`.train`), `g_admm.construct_weighted_G`; covariance via [`lib/cov.py`](lib/cov.py) → `g_admm.weighted_kendall_tau` |
+| 3 | [`pipeline/3_run_cespgrn.py`](pipeline/3_run_cespgrn.py) | Runs CeSpGRN for every bandwidth σ, sparsity weight λ and β, as upstream's `test_scmultisim.py`; the kernel and covariance are computed once per σ and shared | `kernel.calc_kernel_neigh`, `g_admm.G_admm_mask` (`.train`), `g_admm.construct_weighted_G`; covariance via [`lib/cov.py`](lib/cov.py) → `g_admm.weighted_kendall_tau` |
 | 4 | [`pipeline/4_ensemble.py`](pipeline/4_ensemble.py) | Averages the 16 bandwidth × λ runs, cuts every edge outside the prior (as upstream), scores each cell; also scores the priors alone | scoring via [`lib/bmk.py`](lib/bmk.py) → `bmk_beeline.compute_auc_abs`, `compute_eprec_abs` |
 
 [`lib/`](lib) holds our versions of the two modules upstream's scripts import but never published: `cov.py` (covariance, from the commented-out code in `g_admm.py`) and `bmk.py` (per-cell scoring with upstream's metrics).
@@ -53,8 +53,8 @@ The environment (Python, PyTorch with CUDA, R with scMultiSim) is defined in `pi
 ```bash
 # from the repo root, on DAIC
 bash ablation/slurm/sbatch.sh ablation/slurm/build_container.sh                     # builds ablation/ablation-cespgrn.sif
-bash ablation/slurm/submit_reproduction.sh                                          # the full reproduction (69 jobs)
-NUM_CELLS=400 SEEDS=0 FPS=0.01 GPU=0 QOS=short TIME=00:30:00 CPUS=4 MEM=8G \
+bash ablation/slurm/submit_reproduction.sh                                          # the full reproduction (6 GPU jobs, + 3 CPU jobs if data is missing)
+NUM_CELLS=400 SEEDS=0 FPS=0.01 GPU=0 QOS=short TIME=01:00:00 CPUS=4 MEM=8G \
   bash ablation/slurm/submit_reproduction.sh                                        # small CPU test run
 bash ablation/slurm/sbatch.sh -J my-run ablation/slurm/run.sh python path/to/script.py   # any command in the container
 ```
