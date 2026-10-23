@@ -18,6 +18,18 @@ warnings.filterwarnings("ignore")
 torch_sqrtm = MatrixSquareRoot.apply
 
 
+def batched_sqrtm_spd(mats):
+    """\
+    Square roots of a batch of symmetric positive definite matrices, all at once on the matrices' device.
+    Replaces stacking torch_sqrtm (scipy.linalg.sqrtm, one matrix at a time on the CPU) in the ADMM update,
+    which made a run take hours. Same math: an SPD matrix has one SPD square root, computed here from its
+    eigendecomposition in float64 (as MatrixSquareRoot does) and returned in the input's dtype.
+    """
+    w, V = torch.linalg.eigh(mats.double())
+    # eigenvalues are >= 1/rho > 0 here; clamp only guards against rounding below zero
+    return ((V * w.clamp(min=0).sqrt().unsqueeze(-2)) @ V.transpose(-1, -2)).to(mats.dtype)
+
+
 
 def isPSD(A, tol=1e-5):
     # E,V = eigh(A)
@@ -330,7 +342,7 @@ class G_admm_minibatch():
             while(it < max_iters): 
                 # Primal 
                 Y = U - Z + w_empir_cov/b_rho    # (ntimes, ngenes, ngenes)
-                thetas = - 0.5 * Y + torch.stack([torch_sqrtm(mat) for mat in (torch.transpose(Y,1,2) @ Y * 0.25 + I/b_rho)])
+                thetas = - 0.5 * Y + batched_sqrtm_spd(torch.transpose(Y,1,2) @ Y * 0.25 + I/b_rho)
                 Z_pre = Z.detach().clone()
                 # over-relaxation
                 thetas = b_alpha * thetas + (1 - b_alpha) * Z_pre            
@@ -568,7 +580,7 @@ class G_admm_mask():
             while(it < max_iters):
                 # Primal 
                 Y = U - Z + w_empir_cov/b_rho    # (ntimes, ngenes, ngenes)
-                thetas = - 0.5 * Y + torch.stack([torch_sqrtm(mat) for mat in (torch.transpose(Y,1,2) @ Y * 0.25 + I/b_rho)])
+                thetas = - 0.5 * Y + batched_sqrtm_spd(torch.transpose(Y,1,2) @ Y * 0.25 + I/b_rho)
                 Z_pre = Z.detach().clone()
                 # over-relaxation
                 thetas = b_alpha * thetas + (1 - b_alpha) * Z_pre            
