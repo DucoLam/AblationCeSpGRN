@@ -31,7 +31,7 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Supplement: `btag32
 
 **Finding.** With β = 0 upstream loads no mask at all, so "without β" means "no prior". With β > 0 the penalty and the cut always come together. Fig. S3c (AUPRC ≈ 0 without β, 0.76 with) therefore cannot separate them, and the flat β sweep in Fig. S4a (0.01 to 100) is what the cut predicts: β's value only changes the soft part.
 
-**How.** `test_scmultisim.py:166-171` and `test_scmultisim_hyperparams.py` (β sweep with the ATAC mask loaded for every β > 0); supplement Figs. S3c and S4a.
+**How.** `test_scmultisim.py:165-170` and `test_scmultisim_hyperparams.py` (β sweep with the ATAC mask loaded for every β > 0); supplement Figs. S3c and S4a.
 
 ### 2026-10-20 · The authors scored the prior alone but did not report it
 
