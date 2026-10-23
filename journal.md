@@ -111,6 +111,14 @@ Flipping 10% of the zeros in the region×gene and region×TF matrices opens many
 
 **How.** `prior_stats.json` written by `2_build_dataset.py` for each dataset of the full run (build jobs 12999922, 12999933, 12999945, 12999956, 12999968, 12999979).
 
+### 2026-10-23 · Minimal plan for the follow-up experiments
+
+Duco chose the smallest plan that still answers the question. After experiment 1, everything runs on seed 0, noise 0.01; more seeds only if a result is borderline.
+
+- One GPU job, 4 CeSpGRN sets: exp 3 shuffled RNA; exp 5 random prior of the same density, one prior shared by all cells, noise 0.3.
+- CPU only, from the reproduction's saved results: exp 2, exp 4 as the 2 × 2 only, exp 6, exp 8, and exp 7 with the correlation stand-in only.
+- Dropped: the β sweep (Fig. S4a already shows it is flat), GENIE3 (unless exp 7 is unclear), and the correlation stand-in and random weights from exp 3.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
