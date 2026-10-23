@@ -2,7 +2,8 @@
 
 Ablation study of CeSpGRN, a method for inferring cell-specific gene regulatory networks. We test whether its accuracy gain with scATAC-seq comes from the method or from the ATAC prior it is given.
 
-- **[`research.md`](research.md):** the plan, and every finding with how we got it.
+- **[`research.md`](research.md):** the question, what we found, results and plan.
+- **[`journal.md`](journal.md):** the working log: every finding with dates, job IDs and code references.
 - **[`ablation/`](ablation/README.md):** all of our code, what runs in which order, and how to run it on DAIC.
 - **Everything else** is upstream [PeterZZQ/CeSpGRN](https://github.com/PeterZZQ/CeSpGRN), forked at `v1.0.0`; its README is [`README.upstream.md`](README.upstream.md). `git diff upstream/master -- src test demo.py` shows the few fixes we made to it.
 
