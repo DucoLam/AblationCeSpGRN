@@ -100,6 +100,19 @@ All our code now lives in `ablation/`, separate from upstream's; see [`ablation/
 
 The full run above still uses the old layout on DAIC; DAIC switches over once it has finished.
 
+### 2026-10-23 · Our noise model makes the noisy prior denser, not just worse
+
+**Finding.** In the full-size datasets, raising noise from 0.01 to 0.1 multiplies the number of edges the prior allows by about 5. Recall against the ground truth triples and precision halves:
+
+| Prior vs. ground truth (8000 cells) | Precision | Recall | Edges allowed |
+|---|---|---|---|
+| noise 0.01, seeds 0 / 1 / 2 | 0.45 / 0.53 / 0.53 | 0.27 / 0.30 / 0.24 | 1.5% / 1.4% / 1.1% |
+| noise 0.1, seeds 0 / 1 / 2 | 0.26 / 0.25 / 0.26 | 0.82 / 0.77 / 0.74 | 7.8% / 7.6% / 7.1% |
+
+Flipping 10% of the zeros in the region×gene and region×TF matrices opens many new TF → region → gene paths, and some of them happen to be true edges. So the noise-0.1 results depend strongly on how noise is injected, which the paper does not specify. Upstream's own name for the setting is `fp` (false positives), which fits adding links, but not how many.
+
+**How.** `prior_stats.json` written by `2_build_dataset.py` for each dataset of the full run (build jobs 12999922, 12999933, 12999945, 12999956, 12999968, 12999979).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
