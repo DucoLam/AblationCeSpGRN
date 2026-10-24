@@ -268,6 +268,12 @@ Fig. 2b and Fig. S3c redrawn from our scores with upstream's own plotting code (
 
 **How.** `uv run ablation/plots/fig2.py` locally on the `scores.csv` files copied from DAIC (`rsync` of `ablation/results/scmultisim/simulated_8000_*/{beta_1_atac,beta_0}/scores.csv`); the container has no seaborn.
 
+### 2026-10-24 · Open question: does the benchmark's openness setting drive the headline score?
+
+**Suspicion, not a finding.** Because CeSpGRN can only report edges the prior allows (hard filter), and upstream's AUPRC rewards the prior's recall, the headline AUPRC rises directly with how much simulated chromatin is open. In our runs, changing only scMultiSim's `atac.p_zero` from 0.8 to 0.2 moved CeSpGRN from 0.466 to 0.655 at 8000 cells, with the prior alone moving the same way (0.474 → 0.721). If the authors knew the prior dominates (their code scores the prior alone, but the paper does not report it), dense open chromatin would be the setting that makes CeSpGRN look strongest.
+
+What we cannot tell: their `atac.p_zero` is unknown. We chose 0.2 because it reproduces their numbers, so the match is circular, and the gap could also come from their noise model, `region.distrib` or ground-truth definition. Real scATAC-seq is typically far sparser than even scMultiSim's default (well over 90% zeros per cell), so a dense setting would also be unrealistic. Asked in the email to the authors (setting 1); revisit when they reply. A neutral way to show it, if needed: CeSpGRN and the prior alone against `atac.p_zero` (0.95, 0.8, 0.5, 0.2). Duco decided not to run it for now.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
