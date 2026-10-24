@@ -64,9 +64,15 @@ CeSpGRN uses the prior twice: as a penalty in its equation (what the paper descr
 
 **Figure 3.** CeSpGRN with neither, one or both uses of the prior. Mean over 8000 cells, error bars one standard deviation.
 
-### 5. Worse priors · running
+### 5. Worse priors · done
 
-We give CeSpGRN the same RNA with worse priors: a random prior with the same number of edges per cell, one prior shared by all cells, and a noisier prior (noise 0.3). If CeSpGRN follows its prior down, the prior is doing the work. In the small test on our first rebuild, the random prior made CeSpGRN collapse to near zero (0.03), and the shared prior did slightly better than the per-cell one.
+We gave CeSpGRN the same RNA with worse priors: a noisier prior (30% of the region–gene links moved to wrong pairs), one prior shared by all cells (the edges allowed in the most cells, as many as a cell allows on average), and a random prior with the same number of edges per cell. CeSpGRN follows its prior every time. With the random prior it collapses to random (0.03), so the same RNA cannot recover the network on its own. With each of the other priors, CeSpGRN stays within about 0.02 of the prior alone on standard AUPRC, just above it, and below it on the paper's AUPRC.
+
+The per-cell prior does help: one prior shared by all cells scores lower (0.38 vs 0.55 standard AUPRC). So the cell-specific ATAC information matters, but it reaches the output through the prior, not through the RNA.
+
+![Experiment 5](ablation/figures/exp5_worse_priors.png)
+
+**Figure 4.** CeSpGRN and its prior alone, for the real per-cell prior and three worse ones. Left the paper's AUPRC, right standard AUPRC. Mean over 8000 cells, error bars one standard deviation.
 
 ### 6. Inside the prior: does the RNA order the allowed edges? · done
 
@@ -74,19 +80,19 @@ Among the edges the prior allows, 74% are true. We score only those edges: does 
 
 ![Experiment 6](ablation/figures/exp6_inside_prior.png)
 
-**Figure 4.** Standard AUPRC counted only over the edges the prior allows. "Random order" is the share of true edges among them, which is what a random ordering scores. Mean over 8000 cells, error bars one standard deviation.
+**Figure 5.** Standard AUPRC counted only over the edges the prior allows. "Random order" is the share of true edges among them, which is what a random ordering scores. Mean over 8000 cells, error bars one standard deviation.
 
 ### 7. A simple baseline with the same prior · running
 
 We give plain correlation the same prior and cut: once the correlation over all cells, and once CeSpGRN's own per-cell correlation (its input, before the solver). If these match CeSpGRN, the solver adds nothing. In the small test (400 cells), plain correlation over all cells scored the same as CeSpGRN (0.74 vs 0.74).
 
-### 8. Standard AUPRC · done (experiments 3 and 5 still to add)
+### 8. Standard AUPRC · done (experiment 3 still to add)
 
 On the paper's AUPRC the prior alone scores higher than CeSpGRN. With standard AUPRC the order flips: CeSpGRN is slightly ahead (0.55 vs 0.52, and 0.20 vs 0.18 with default chromatin). So "the prior beats CeSpGRN" is partly an effect of the metric. The paper's AUPRC also inflates all scores: with default chromatin it reads 0.47 where standard AUPRC gives 0.20.
 
 ![Experiment 8](ablation/figures/exp8_standard_auprc.png)
 
-**Figure 5.** The paper's AUPRC next to standard AUPRC, for CeSpGRN and the prior alone, in both chromatin settings. Mean over 8000 cells, error bars one standard deviation.
+**Figure 6.** The paper's AUPRC next to standard AUPRC, for CeSpGRN and the prior alone, in both chromatin settings. Mean over 8000 cells, error bars one standard deviation.
 
 Dropped for now: a sweep over β (the paper's Fig. S4a already shows it is flat), GENIE3 as a second baseline (only if experiment 7 is unclear), noise 0.1, and more seeds (only if a result is borderline).
 

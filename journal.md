@@ -320,6 +320,21 @@ Same pattern as the 400-cell test: the cut carries the score, the penalty alone 
 
 `ablation/plots/experiments.py` draws `exp4_penalty_vs_cut.png`, `exp6_inside_prior.png` and `exp8_standard_auprc.png` from `<results>/<dataset>/cpu/exp<N>_scores.csv` (copied from DAIC), in the style of upstream's Fig. 2b. `ablation/figures/paper_fig2.png` is the paper's Fig. 2, cropped from p. 6 of the published PDF (300 dpi), for side-by-side comparison. research.md is now organised per experiment, each with a short paragraph, figure and caption.
 
+### 2026-10-24 · Experiment 5 at full size: CeSpGRN follows whatever prior it gets
+
+**Finding (8000 cells, main dataset `pz0.2_links`, same RNA).** Upstream AUPRC / EP / standard AUPRC, CeSpGRN vs the prior alone:
+
+| Prior | CeSpGRN | Prior alone |
+|---|---|---|
+| Real per cell (`atac`) | 0.655 / 0.744 / 0.545 | 0.721 / 0.742 / 0.522 |
+| Noise 0.3, links mode (precision 0.658, recall 0.548) | 0.533 / 0.658 / 0.391 | 0.608 / 0.658 / 0.372 |
+| Shared by all cells | 0.498 / 0.606 / 0.376 | 0.592 / 0.607 / 0.358 |
+| Random, same edges per cell | 0.025 / 0.025 / 0.026 | 0.036 / 0.025 / 0.025 |
+
+CeSpGRN tracks its prior in every case: about 0.02 above it on standard AUPRC, below it on upstream's AUPRC, level on EP. With a random prior it is at chance. Unlike the 400-cell test on the first rebuild, the shared prior scores clearly below the per-cell prior (0.376 vs 0.545 standard). Inside the prior (exp 6 metric): noise 0.3 0.697 vs baseline 0.658, shared 0.644 vs 0.607, random 0.045 vs 0.026.
+
+**How.** CeSpGRN runs from FALCON's job 13000448 (`run_followup.sh ... links`, results in `ablation/results/scmultisim/followup_seed0_pz0.2_links/priors/beta_1_<prior>/`). Standard AUPRC and inside-prior scores: job 13000547 (`6_cpu_experiments.py --exp 8/6 --prior <prior>`, output in `priors/cpu_<prior>/`). Figure `ablation/figures/exp5_worse_priors.png` (`ablation/plots/experiments.py`).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

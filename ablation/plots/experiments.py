@@ -9,8 +9,10 @@ Figures for the CPU experiments (6_cpu_experiments.py), in the same style as ups
     exp4_penalty_vs_cut.png   experiment 4: penalty and cut switched on and off separately
     exp6_inside_prior.png     experiment 6: ranking of the edges inside the prior vs a random order
     exp8_standard_auprc.png   experiment 8: the paper's AUPRC next to standard AUPRC
+    exp5_worse_priors.png     experiment 5: CeSpGRN and its prior alone, for the real and three worse priors
 
-Reads <results>/<dataset>/cpu/exp<N>_scores.csv (copied from DAIC).
+Reads <results>/<dataset>/cpu/exp<N>_scores.csv and, for experiment 5,
+<results>/followup_seed0_pz0.2_links/priors/cpu_<prior>/exp8_scores.csv (copied from DAIC).
 Usage (from the repo root): uv run ablation/plots/experiments.py [results dir] [output dir]
 """
 import os
@@ -89,4 +91,21 @@ for ax, (dataset, label) in zip(axes, [(MAIN, "More open chromatin (main)"), (DE
     ax.set_ylabel("Score")
 axes[0].get_legend().remove()
 finish(fig, axes[1], "The paper's AUPRC vs standard AUPRC", os.path.join(out_dir, "exp8_standard_auprc.png"))
+
+# Experiment 5
+priors = {"atac": "Real per cell", "noise0.3": "Noisier (0.3)", "shared": "Shared by all cells", "random": "Random"}
+frames = []
+for prior, label in priors.items():
+    scores = load(MAIN, 8) if prior == "atac" else pd.read_csv(
+        os.path.join(results, "followup_seed0_pz0.2_links", "priors", f"cpu_{prior}", "exp8_scores.csv"), index_col=0)
+    network = {f"CeSpGRN ({prior.upper()})": "CeSpGRN", f"Prior ({prior.upper()})": "Prior alone"}
+    frames.append(scores[scores["model"].isin(network)].replace({"model": network}).assign(prior=label))
+data = pd.concat(frames, ignore_index=True)
+fig, axes = plt.subplots(1, 2, figsize=(16, 6.5), sharey=True)
+for ax, (metric, label) in zip(axes, METRICS.items()):
+    barplot(ax, data, "prior", metric, "model", list(priors.values()))
+    ax.set_title(label, fontsize=17)
+    ax.set_ylabel("Score")
+axes[0].get_legend().remove()
+finish(fig, axes[1], "CeSpGRN follows whatever prior it gets", os.path.join(out_dir, "exp5_worse_priors.png"))
 print("wrote", sorted(f for f in os.listdir(out_dir) if f.startswith("exp")))
