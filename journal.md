@@ -129,6 +129,23 @@ Duco chose the smallest plan that still answers the question. After experiment 1
 
 **Resubmitted.** 6 GPU jobs, 13000041–13000046 (`ablation/results/full_run_jobs_v3.txt` on DAIC).
 
+### 2026-10-24 · Full reproduction: CeSpGRN does not beat its prior
+
+**Finding.** At 8000 cells CeSpGRN with the ATAC prior never beats the prior alone on AUPRC. At noise 0.01 its early precision equals the prior's (difference ≤ 0.001); at noise 0.1 it is 0.02–0.04 higher. Mean over the 8000 cells, upstream's AUPRC:
+
+| Noise, seed | CeSpGRN ATAC (AUPRC / EP) | Prior ATAC | Prior TF | CeSpGRN w/o β |
+|---|---|---|---|---|
+| 0.01, 0 | 0.3321 / 0.4544 | 0.3685 / 0.4534 | 0.6162 / 0.2327 | 0.0250 / 0.0221 |
+| 0.01, 1 | 0.3637 / 0.5309 | 0.4208 / 0.5305 | 0.6163 / 0.2335 | 0.0249 / 0.0150 |
+| 0.01, 2 | 0.3667 / 0.5343 | 0.3954 / 0.5336 | 0.6160 / 0.2325 | 0.0308 / 0.0577 |
+| 0.1, 0 | 0.2719 / 0.2918 | 0.5412 / 0.2604 | 0.6162 / 0.2327 | 0.0250 / 0.0221 |
+| 0.1, 1 | 0.2486 / 0.2672 | 0.5155 / 0.2529 | 0.6163 / 0.2335 | 0.0249 / 0.0150 |
+| 0.1, 2 | 0.2843 / 0.2920 | 0.5005 / 0.2581 | 0.6160 / 0.2325 | 0.0308 / 0.0577 |
+
+β = 0 scores are identical across noise for the same seed, as expected: noise only changes the prior. The paper reports 0.76 for CeSpGRN with β (Fig. S3c); we stay well below, consistent with our weaker prior.
+
+**How.** Jobs 13000041–13000046 (all COMPLETED, 3:08–3:35 h each). Means of `AUPRC (abs)` and `Early Precision (abs)` per model over the per-cell rows of `ablation/results/scmultisim/<dataset>/{beta_1_atac,beta_0}/scores.csv` on DAIC.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

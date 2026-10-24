@@ -14,21 +14,26 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 4. **The authors scored the prior on its own, but did not report it.** Their evaluation code computes it; it is missing from the paper and supplement.
 5. **The benchmark cannot be rebuilt from what is published.** The code that builds the priors and adds noise is not public. We rebuilt it (see [Setup](#setup)); our datasets match the paper's sizes.
 6. **The AUPRC used in the paper flatters tied scores.** It draws a straight line from the start of the curve to the first real point, so a plain yes/no prediction scores roughly (1 + precision) / 2. Priors, and CeSpGRN after the filter, are full of ties. We keep this metric for now so our numbers compare with the paper's.
-7. **In our rebuild, noise makes the prior larger, not just worse.** See the second table below. How the paper injects noise is not specified, so results at high noise depend heavily on that choice.
+7. **In our rebuild, noise makes the prior larger, not just worse.** See the prior quality table below. How the paper injects noise is not specified, so results at high noise depend heavily on that choice.
+8. **On the full benchmark, CeSpGRN does not beat the prior it is given.** See the first table below.
 
 ## Results
 
-**Small test run** (400 cells, one seed, noise 0.01). CeSpGRN does not beat the prior it is given:
+**Reproduction of the paper's main figure** (Fig. 2b): 8000 cells, mean over cells, range over 3 seeds.
 
-| | AUPRC | Early precision |
-|---|---|---|
-| CeSpGRN with ATAC prior | 0.35 | 0.55 |
-| ATAC prior alone | 0.40 | 0.55 |
-| CeSpGRN without prior | 0.03 | 0.02 |
+| Noise | | AUPRC | Early precision |
+|---|---|---|---|
+| 0.01 | CeSpGRN with ATAC prior | 0.33 – 0.37 | 0.45 – 0.53 |
+| | ATAC prior alone | 0.37 – 0.42 | 0.45 – 0.53 |
+| 0.1 | CeSpGRN with ATAC prior | 0.25 – 0.28 | 0.27 – 0.29 |
+| | ATAC prior alone | 0.50 – 0.54 | 0.25 – 0.26 |
+| either | CeSpGRN without prior | 0.02 – 0.03 | 0.02 – 0.06 |
 
-Not yet comparable with the paper: it uses 1/20 of the cells, and our prior is weaker than the authors' must be.
+At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as accurate as the prior's, and its AUPRC is lower. At high noise, where the prior is mostly wrong, the RNA helps a little with ranking (early precision +0.02 to +0.03). Without the prior CeSpGRN is close to random, as in the paper.
 
-**Quality of our prior at full size** (8000 cells, range over 3 seeds):
+We do not reach the paper's 0.76. Our rebuilt prior is weaker than the authors' must be, and the paper does not report how good its prior was on its own.
+
+**Quality of our prior** (range over 3 seeds):
 
 | Noise | Precision | Recall | Share of all edges it allows |
 |---|---|---|---|
@@ -37,16 +42,14 @@ Not yet comparable with the paper: it uses 1/20 of the cells, and our prior is w
 
 More noise lets through about 5 times more edges, which catches about 3 times more true edges at half the precision.
 
-**Full reproduction of the paper's main figure** (Fig. 2b): running on the cluster.
-
 ## Plan
 
 After experiment 1, everything runs on one dataset (seed 0, noise 0.01). We add seeds only if a result is borderline. Experiments 3 and 5 share one GPU job; the rest reuse experiment 1's saved results and run on CPU.
 
 | # | Experiment | Compute | Status |
 |---|---|---|---|
-| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | running |
-| 2 | Score the ATAC prior alone, without RNA | CPU | planned |
+| 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | done |
+| 2 | Score the ATAC prior alone, without RNA | CPU | done |
 | 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | planned |
 | 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |
 | 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | planned |
