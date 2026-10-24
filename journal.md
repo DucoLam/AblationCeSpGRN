@@ -240,6 +240,8 @@ With every gene's expression shuffled across cells, CeSpGRN scores as well as wi
 
 No single setting beats the prior's AUPRC (best 0.712 vs 0.774), but at bandwidth ≥ 1 and λ 0.05–0.1 early precision rises to 0.87–0.93 against the prior's 0.81: within the prior, the RNA does help pick out the true edges. Averaging over all 16 settings (the paper's ensemble) washes this out, partly because λ 0.5 gives near-empty networks. Without the prior every setting stays at 0.01–0.03. Preliminary: 400 cells, one seed.
 
+Caveat: upstream's early precision takes the top k edges with k = min(true edges, non-zero predicted edges) (`src/bmk_beeline.py:450-453`). At higher λ the cut network may hold fewer edges than the truth, so EP is then the precision of a smaller set. A random subset of the prior's edges would still score about the prior's precision (0.81), so the rise to 0.93 is real RNA signal, but over fewer edges. To check on the full runs: the number of non-zero edges per setting.
+
 **How.** Job 13000404 (CPU, 32:45; same dataset took 32:58 without per-setting scoring): `3_run_cespgrn.py` at 2169483 into `ablation/results/scmultisim/test_setting_scores_400/`, then `4_ensemble.py`. Per-cell scores in `beta_1_atac/scores_per_setting.csv` and `beta_0/scores_per_setting.csv` on DAIC.
 
 ## Changes to upstream code
