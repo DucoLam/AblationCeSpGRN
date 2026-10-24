@@ -29,7 +29,7 @@ def main():
     parser.add_argument("--data", required=True)
     parser.add_argument("--run", required=True)
     parser.add_argument("--model", required=True)
-    parser.add_argument("--score-priors", action="store_true", help="also score the ATAC and TF priors alone")
+    parser.add_argument("--score-priors", action="store_true", help="also score this run's prior and the TF prior alone")
     args = parser.parse_args()
     njobs = len(os.sched_getaffinity(0))
 
@@ -48,7 +48,7 @@ def main():
     Gs_gt = np.load(os.path.join(args.data, "graph_gt.npy"))
     scores = [bmk.calc_scores_para(Gs_ensemble, Gs_gt, model=args.model, beta=beta, njobs=njobs)]
     if args.score_priors:
-        for name in ["atac", "tf"]:
+        for name in dict.fromkeys([prior, "tf"]):
             prior_graph = 1 - np.load(os.path.join(args.data, f"masks_{name}.npy"))
             scores.append(bmk.calc_scores_para(prior_graph, Gs_gt, model=f"Prior ({name.upper()})", njobs=njobs))
     scores = pd.concat(scores, ignore_index=True)

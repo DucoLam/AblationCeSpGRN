@@ -1,11 +1,12 @@
 """
-Run CeSpGRN on one simulated dataset for every kernel bandwidth, sparsity weight and β, exactly
-as upstream test/scripts_scmultisim/test_scmultisim.py does, and save per β and bandwidth the sum
-of the partial-correlation graphs over the λs (before the final prior cut) for 4_ensemble.py.
+Run CeSpGRN on one simulated dataset for every kernel bandwidth, sparsity weight, β and prior,
+exactly as upstream test/scripts_scmultisim/test_scmultisim.py does, and save per run (β, prior) and
+bandwidth the sum of the partial-correlation graphs over the λs (before the final prior cut) for
+4_ensemble.py.
 
 Upstream's ensemble runs 4 bandwidths x 4 lambdas. The kernel, covariance and the kernel-weighted
 covariance inside G_admm_mask depend only on the bandwidth, so they are computed once per bandwidth
-and shared by every λ and β.
+and shared by every λ, β and prior (the solver's mask is swapped between priors).
 
 Two differences from upstream's script, neither changes the result:
 - With β = 0 upstream passes no mask at all. Here the mask is passed but multiplied by β = 0
@@ -14,7 +15,9 @@ Two differences from upstream's script, neither changes the result:
   and keeps only the last; those intermediate passes are skipped, and the same upstream function
   (g_admm.construct_weighted_G) runs once on the final thetas.
 
-Output: <out-root>/beta_1_atac/ and <out-root>/beta_0/, each with Gs_soft_sum_bw<σ>.npy and run_bw<σ>.json.
+Priors are read from masks_<name>.npy in the dataset dir (atac, tf, or variants from 5_make_variants.py).
+Output: <out-root>/beta_1_<prior>/ per prior and <out-root>/beta_0/, each with Gs_soft_sum_bw<σ>.npy
+and run_bw<σ>.json.
 
 Usage (from the repo root):
     python ablation/pipeline/3_run_cespgrn.py --data ablation/data/scMultiSim/<dataset> \
@@ -53,7 +56,7 @@ def main():
     parser.add_argument("--bandwidths", type=float, nargs="+", default=[0.01, 0.1, 1, 10])
     parser.add_argument("--lambs", type=float, nargs="+", default=[0.01, 0.05, 0.1, 0.5])
     parser.add_argument("--betas", type=float, nargs="+", default=[1, 0])
-    parser.add_argument("--prior", choices=["atac", "tf"], default="atac", help="used only when beta > 0")
+    parser.add_argument("--priors", nargs="+", default=["atac"], help="masks_<name>.npy to use when beta > 0")
     parser.add_argument("--truncate", type=int, default=100)
     parser.add_argument("--weighted-kt", type=int, choices=[0, 1], default=1)
     args = parser.parse_args()
@@ -66,18 +69,24 @@ def main():
     libsize = np.median(np.sum(counts_rna, axis=1))
     counts_rna_norm = counts_rna / (np.sum(counts_rna, axis=1, keepdims=True) + 1e-6) * libsize
     counts_rna_norm = np.log1p(counts_rna_norm)
-    masks = np.load(os.path.join(args.data, f"masks_{args.prior}.npy")).astype(np.float32)
+
+    def load_mask(name):
+        return torch.FloatTensor(np.load(os.path.join(args.data, f"masks_{name}.npy")).astype(np.float32))
+
+    # one run per prior for β > 0; β = 0 uses no prior, so it runs once
+    runs = [(beta, prior) for beta in args.betas for prior in (args.priors if beta > 0 else [args.priors[0]])]
     X_pca = PCA(n_components=20).fit_transform(counts_rna_norm)
 
     for bandwidth in args.bandwidths:
         start = time.time()
         K, K_trun = kernel.calc_kernel_neigh(X_pca, bandwidth=bandwidth, truncate=True, truncate_param=args.truncate)
         empir_cov = cov.est_cov_para(X=counts_rna_norm, K_trun=K_trun, weighted_kt=bool(args.weighted_kt), njobs=njobs)
-        gadmm_batch = g_admm.G_admm_mask(X=counts_rna_norm[:, None, :], K=K, mask=masks,
+        gadmm_batch = g_admm.G_admm_mask(X=counts_rna_norm[:, None, :], K=K, mask=None,
                                          pre_cov=torch.FloatTensor(empir_cov), batchsize=512, device=device)
         print(f"bandwidth {bandwidth}: kernel + covariance {time.time() - start:.0f} s", flush=True)
 
-        for beta in args.betas:
+        for beta, prior in runs:
+            gadmm_batch.mask = load_mask(prior)
             Gs_soft_sum = 0
             for lamb in args.lambs:
                 start = time.time()
@@ -88,14 +97,14 @@ def main():
                 finally:
                     g_admm.construct_weighted_G = construct_weighted_G
                 Gs_soft_sum = Gs_soft_sum + construct_weighted_G(gadmm_batch.thetas, njobs=njobs)
-                print(f"bandwidth {bandwidth}, beta {beta:g}, lambda {lamb}: {time.time() - start:.0f} s", flush=True)
+                print(f"bandwidth {bandwidth}, beta {beta:g}, prior {prior}, lambda {lamb}: {time.time() - start:.0f} s", flush=True)
 
-            out = run_dir(args.out_root, beta, args.prior)
+            out = run_dir(args.out_root, beta, prior)
             os.makedirs(out, exist_ok=True)
             np.save(os.path.join(out, f"Gs_soft_sum_bw{bandwidth}.npy"), Gs_soft_sum.astype(np.float32))
             with open(os.path.join(out, f"run_bw{bandwidth}.json"), "w") as f:
                 json.dump({"data": args.data, "bandwidth": bandwidth, "lambs": args.lambs, "beta": beta,
-                           "prior": args.prior, "truncate": args.truncate, "weighted_kt": args.weighted_kt,
+                           "prior": prior, "truncate": args.truncate, "weighted_kt": args.weighted_kt,
                            "n_settings": len(args.lambs)}, f, indent=2)
         del gadmm_batch, empir_cov, K, K_trun
 
