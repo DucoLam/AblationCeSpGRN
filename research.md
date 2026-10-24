@@ -33,21 +33,20 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 
 At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as accurate as the prior's, and its AUPRC is lower. At high noise, where the prior is mostly wrong, the RNA helps a little with ranking (early precision +0.01 to +0.03). Without the prior CeSpGRN is close to random, as in the paper.
 
-**Why we stay below the paper.** Our prior is much weaker than the authors' must be. Scoring variants of it on one dataset (seed 0, noise 0.01) shows why:
+**Why we stay below the paper.** Our prior is much weaker than the authors' must be, for two reasons. Scored on its own (seed 0, 8000 cells):
 
-| Prior variant | Precision | Recall | AUPRC | Early precision |
-|---|---|---|---|---|
-| Ours | 0.45 | 0.26 | 0.37 | 0.45 |
-| Also use negative edges | 0.46 | 0.31 | 0.39 | 0.45 |
-| Treat every region as open | 0.42 | 0.80 | 0.61 | 0.42 |
-| Both of the above | 0.41 | 0.92 | 0.67 | 0.41 |
-| Both, and no noise | 0.71 | 0.91 | 0.81 | 0.71 |
+| How the prior is built | Regions open per cell | Precision | Recall | AUPRC | Early precision |
+|---|---|---|---|---|---|
+| Ours (simulator defaults, noise 0.01) | 20% | 0.45 | 0.26 | 0.37 | 0.45 |
+| Simulator defaults, no noise | 20% | 0.72 | 0.22 | 0.48 | 0.72 |
+| More open chromatin, no noise | 50% | 0.73 | 0.58 | 0.66 | 0.73 |
+| Much more open chromatin, no noise | 80% | 0.75 | 0.70 | 0.73 | 0.75 |
+| *Paper: CeSpGRN (not its prior), noise 0.01* | | | | *0.76* | *0.69* |
 
-- **Which regions count as open is the main cause.** We call a region open in a cell when it has any ATAC reads. That is only 20% of regions per cell, and it drops three quarters of the true edges. The paper does not say how it decides openness.
-- **Our noise is too strong.** Even at 0.01 it drops the prior's precision from 0.71 to 0.41. We add false links between regions and genes and between regions and TFs, but the paper's Fig. 2 caption describes noise only on the regions–genes side. This also explains why, unlike in the paper, our prior gets *better* on AUPRC at noise 0.1.
-- **Negative edges matter little.** The simulator only links a TF to a region when it activates the gene. Repressions, 23% of true edges, can never enter the prior.
+- **Our noise is far too strong.** We add each missing region–gene link with probability equal to the noise level. There are only 147 real links among 36,300 possible ones, so noise 0.01 already adds about 360 false links. The paper calls the noise level an "error rate", which more likely means a share of the real links.
+- **The simulator's default leaves most chromatin closed.** By default 80% of the simulated ATAC values are zero, so only 20% of regions are open in a cell and the prior misses most true edges. The paper does not say which value it used. Other choices (smoothing openness over neighbouring cells, counting repressing edges) change little.
 
-A clean prior on its own (last row) already scores about what the paper reports for CeSpGRN.
+With little noise and more open chromatin, the prior alone scores about what the paper reports for CeSpGRN. We are asking the authors for their exact settings.
 
 **Quality of our prior** (range over 3 seeds):
 

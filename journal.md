@@ -165,6 +165,30 @@ Duco chose the smallest plan that still answers the question. After experiment 1
 
 **How.** Job 13000189, `ablation/tools/probe_prior_recall.py` on `ablation/data/scMultiSim/raw/cells8000_seed0`; noise drawn as in `2_build_dataset.py`. Paper numbers read from Fig. 2b (main text p. 6).
 
+### 2026-10-24 · The gap is our noise model and scMultiSim's ATAC sparsity, not the openness rule
+
+**Finding.** Two things make our prior weaker than the paper's:
+
+- **Noise per empty entry is huge.** region×gene has 147 links out of 36,300 entries (seed 0), so flipping each 0 with probability 0.01 adds about 360 false links, 2.5 times the real ones. Without noise the prior's precision is 0.72 instead of 0.45. Putting noise on region×gene only (as the Fig. 2 caption reads) instead of on both matrices changes precision by < 0.01 at noise 0.01, because both are swamped.
+- **scMultiSim's `atac.p_zero` (default 0.8) sets the open fraction.** Our 20% open regions per cell is exactly that default. Re-simulating seed 0 with lower values:
+
+| `atac.p_zero` | Open | Noise | Precision | Recall | AUPRC | EP |
+|---|---|---|---|---|---|---|
+| 0.8 (default) | 0.20 | none | 0.721 | 0.216 | 0.478 | 0.719 |
+| 0.8 | 0.20 | 0.01 rg+rt (ours) | 0.454 | 0.265 | 0.369 | 0.453 |
+| 0.5 | 0.50 | none | 0.729 | 0.576 | 0.656 | 0.728 |
+| 0.5 | 0.50 | 0.01 rg+rt | 0.453 | 0.659 | 0.558 | 0.452 |
+| 0.2 | 0.80 | none | 0.747 | 0.695 | 0.725 | 0.749 |
+| 0.2 | 0.80 | 0.01 rg+rt | 0.469 | 0.781 | 0.627 | 0.470 |
+
+The noise-free prior at `atac.p_zero` 0.2 alone scores 0.725 / 0.749, next to the paper's CeSpGRN (0.759 / 0.692).
+
+Ruled out as main causes: smoothing openness over the 51 neighbouring cells on the same branch (open in ≥ 10/30/50% of them) moves the open fraction only from 0.20 to 0.20–0.21, so openness in scMultiSim is stable along the trajectory, not dropout; "rg both ways" noise (also dropping real links) is within 0.01 of "rg".
+
+**How.** Jobs 13000191 (`ablation/tools/probe_prior_rules.py`, full grid on `raw/cells8000_seed0`) and 13000192 (re-simulation with `1_simulate.R 0 <out> 8000 <atac_p_zero>` into `raw/pzero_check/`, then the short grid). Link counts with awk on `region_to_gene.tsv`.
+
+Asked the authors (draft by Duco, not yet sent) for the scMultiSim settings, how openness and region×TF are defined, how noise is applied, and the data or scripts.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

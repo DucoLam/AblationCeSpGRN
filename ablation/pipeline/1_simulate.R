@@ -7,7 +7,8 @@
 #
 # Noise (fp) only affects the prior, so one simulation per seed serves both noise levels.
 #
-# Usage (from the repo root): Rscript ablation/pipeline/1_simulate.R <seed> <out_dir> [num_cells]
+# Usage (from the repo root): Rscript ablation/pipeline/1_simulate.R <seed> <out_dir> [num_cells] [atac_p_zero]
+# atac_p_zero is scMultiSim's share of zeros in the ATAC data (default 0.8): it sets how many regions are open.
 
 suppressPackageStartupMessages(library(scMultiSim))
 
@@ -15,6 +16,7 @@ args <- commandArgs(trailingOnly = TRUE)
 seed <- as.integer(args[1])
 out_dir <- args[2]
 num_cells <- if (length(args) >= 3) as.integer(args[3]) else 8000L
+atac_p_zero <- if (length(args) >= 4) as.numeric(args[4]) else 0.8
 dir.create(out_dir, recursive = TRUE, showWarnings = FALSE)
 
 data(GRN_params_100)
@@ -28,6 +30,7 @@ options <- list(
   tree = Phyla1(),
   diff.cif.fraction = 0.8,
   do.velocity = FALSE,
+  atac.p_zero = atac_p_zero,
   dynamic.GRN = list(
     seed = seed,
     num.changing.edges = 20,
