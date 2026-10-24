@@ -17,7 +17,8 @@ Two differences from upstream's script, neither changes the result:
 
 Priors are read from masks_<name>.npy in the dataset dir (atac, tf, or variants from 5_make_variants.py).
 Output: <out-root>/beta_1_<prior>/ per prior and <out-root>/beta_0/, each with Gs_soft_sum_bw<σ>.npy
-and run_bw<σ>.json.
+and run_bw<σ>.json, and scores_per_setting.csv: every single bandwidth x λ network, after the same
+prior cut as the ensemble, scored per cell (the networks themselves are not kept).
 
 Usage (from the repo root):
     python ablation/pipeline/3_run_cespgrn.py --data ablation/data/scMultiSim/<dataset> \
@@ -35,9 +36,11 @@ sys.path.append(os.path.join(HERE, "../../src"))
 sys.path.append(os.path.join(HERE, "../lib"))
 
 import numpy as np
+import pandas as pd
 import torch
 from sklearn.decomposition import PCA
 
+import bmk
 import cov
 import g_admm
 import kernel
@@ -59,6 +62,7 @@ def main():
     parser.add_argument("--priors", nargs="+", default=["atac"], help="masks_<name>.npy to use when beta > 0")
     parser.add_argument("--truncate", type=int, default=100)
     parser.add_argument("--weighted-kt", type=int, choices=[0, 1], default=1)
+    parser.add_argument("--no-setting-scores", action="store_true", help="don't score each bandwidth x λ")
     args = parser.parse_args()
 
     njobs = len(os.sched_getaffinity(0))
@@ -76,6 +80,8 @@ def main():
     # one run per prior for β > 0; β = 0 uses no prior, so it runs once
     runs = [(beta, prior) for beta in args.betas for prior in (args.priors if beta > 0 else [args.priors[0]])]
     X_pca = PCA(n_components=20).fit_transform(counts_rna_norm)
+    Gs_gt = None if args.no_setting_scores else np.load(os.path.join(args.data, "graph_gt.npy"))
+    setting_scores = {}  # run dir -> per-cell scores of each bandwidth x λ
 
     for bandwidth in args.bandwidths:
         start = time.time()
@@ -87,6 +93,8 @@ def main():
 
         for beta, prior in runs:
             gadmm_batch.mask = load_mask(prior)
+            out = run_dir(args.out_root, beta, prior)
+            os.makedirs(out, exist_ok=True)
             Gs_soft_sum = 0
             for lamb in args.lambs:
                 start = time.time()
@@ -96,11 +104,21 @@ def main():
                                       theta_init_offset=0.1, beta=beta, njobs=njobs)
                 finally:
                     g_admm.construct_weighted_G = construct_weighted_G
-                Gs_soft_sum = Gs_soft_sum + construct_weighted_G(gadmm_batch.thetas, njobs=njobs)
+                Gs = construct_weighted_G(gadmm_batch.thetas, njobs=njobs)
+                Gs_soft_sum = Gs_soft_sum + Gs
                 print(f"bandwidth {bandwidth}, beta {beta:g}, prior {prior}, lambda {lamb}: {time.time() - start:.0f} s", flush=True)
 
-            out = run_dir(args.out_root, beta, prior)
-            os.makedirs(out, exist_ok=True)
+                if Gs_gt is not None:
+                    # same final cut as the ensemble in 4_ensemble.py
+                    Gs_cut = Gs * (1 - gadmm_batch.mask.numpy()) if beta > 0 else Gs
+                    scores = bmk.calc_scores_para(Gs_cut, Gs_gt, model=f"CeSpGRN ({prior})" if beta > 0 else "CeSpGRN (w/o beta)",
+                                                  bandwidth=bandwidth, truncate_param=args.truncate, lamb=lamb, beta=beta,
+                                                  njobs=njobs)
+                    setting_scores.setdefault(out, []).append(scores)
+                    pd.concat(setting_scores[out], ignore_index=True).to_csv(os.path.join(out, "scores_per_setting.csv"))
+                    print(f"  AUPRC {scores['AUPRC (abs)'].mean():.3f}, Eprec {scores['Early Precision (abs)'].mean():.3f}", flush=True)
+                del Gs
+
             np.save(os.path.join(out, f"Gs_soft_sum_bw{bandwidth}.npy"), Gs_soft_sum.astype(np.float32))
             with open(os.path.join(out, f"run_bw{bandwidth}.json"), "w") as f:
                 json.dump({"data": args.data, "bandwidth": bandwidth, "lambs": args.lambs, "beta": beta,
