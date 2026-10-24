@@ -44,7 +44,7 @@ At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as acc
 | Both, and no noise | 0.71 | 0.91 | 0.81 | 0.71 |
 
 - **Which regions count as open is the main cause.** We call a region open in a cell when it has any ATAC reads. That is only 20% of regions per cell, and it drops three quarters of the true edges. The paper does not say how it decides openness.
-- **Our noise is too strong.** Even at 0.01 it halves the share of true edges in the prior's links. We add false links between regions and genes and between regions and TFs, but the paper's Fig. 2 caption describes noise only on the regions–genes side. This also explains why, unlike in the paper, our prior gets *better* on AUPRC at noise 0.1.
+- **Our noise is too strong.** Even at 0.01 it drops the prior's precision from 0.71 to 0.41. We add false links between regions and genes and between regions and TFs, but the paper's Fig. 2 caption describes noise only on the regions–genes side. This also explains why, unlike in the paper, our prior gets *better* on AUPRC at noise 0.1.
 - **Negative edges matter little.** The simulator only links a TF to a region when it activates the gene. Repressions, 23% of true edges, can never enter the prior.
 
 A clean prior on its own (last row) already scores about what the paper reports for CeSpGRN.
