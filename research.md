@@ -58,6 +58,12 @@ With little noise and more open chromatin, the prior alone scores about what the
 
 The full-size run on the rebuilt prior is queued.
 
+**First look at experiments 3 and 5** (small test on the old prior; will be redone on the rebuilt one):
+
+- **Shuffled RNA changes nothing.** With each gene's expression shuffled across cells, so the RNA carries no regulatory signal, CeSpGRN scores the same as with the real RNA (AUPRC 0.37 vs 0.35).
+- **A random prior makes it collapse** to near zero (0.03), even with the same number of allowed edges.
+- **One prior shared by all cells does slightly better** than the per-cell prior (0.37 vs 0.35), so the cell-specific part of the ATAC data does not help here either.
+
 **Quality of our prior** (range over 3 seeds):
 
 | Noise | Precision | Recall | Share of all edges it allows |
@@ -76,9 +82,9 @@ After experiment 1, everything runs on one dataset (seed 0, noise 0.01). We add 
 | 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | done |
 | 1b | Repeat experiment 1 on the rebuilt prior: seed 0, noise 0.01, default and more open chromatin | GPU | queued |
 | 2 | Score the ATAC prior alone, without RNA | CPU | done |
-| 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | planned |
+| 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | tested small; waiting for the rebuilt prior |
 | 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |
-| 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | planned |
+| 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | tested small; waiting for the rebuilt prior |
 | 6 | Score only edges inside the prior, to see what the RNA adds | CPU | planned |
 | 7 | Give plain correlation the same prior and filter | CPU | planned |
 | 8 | Rescore everything with standard AUPRC | CPU | planned |
