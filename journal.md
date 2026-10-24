@@ -316,6 +316,10 @@ Same pattern as the 400-cell test: the cut carries the score, the penalty alone 
 
 **How.** Jobs 13000543 (exp 4, 1:12), 13000544 (exp 6, 0:20), 13000546 (exp 8, 2:00); `ablation/pipeline/6_cpu_experiments.py`; output in `ablation/results/scmultisim/<dataset>/cpu/exp<N>_scores.csv` on DAIC. Exp 7 (13000545) still running.
 
+### 2026-10-24 · Figures for experiments 4, 6, 8 and the paper's Fig. 2 in research.md
+
+`ablation/plots/experiments.py` draws `exp4_penalty_vs_cut.png`, `exp6_inside_prior.png` and `exp8_standard_auprc.png` from `<results>/<dataset>/cpu/exp<N>_scores.csv` (copied from DAIC), in the style of upstream's Fig. 2b. `ablation/figures/paper_fig2.png` is the paper's Fig. 2, cropped from p. 6 of the published PDF (300 dpi), for side-by-side comparison. research.md is now organised per experiment, each with a short paragraph, figure and caption.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

@@ -6,24 +6,40 @@ We ask where that gain comes from: does CeSpGRN learn the network from the RNA, 
 
 Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeSpGRN](https://github.com/PeterZZQ/CeSpGRN) `v1.0.0`. The detailed log, with dates, job IDs and code references, is in [`journal.md`](journal.md).
 
+## Main result
+
+**CeSpGRN's accuracy comes from the ATAC prior and a hard cut on edges outside it, not from the RNA.** Take the prior away and CeSpGRN is close to random. Keep only the cut and drop CeSpGRN's use of the prior in its equation, and the score barely moves. Within the prior, the RNA adds a small gain in ordering the edges, and CeSpGRN without the prior gives the same gain.
+
+The experiments below show each step. All numbers are 8000 cells, one seed, noise 0.01, unless stated otherwise.
+
 ## How CeSpGRN works, in short
 
 - **Input:** gene expression (RNA) for every cell, and per cell a **prior**: the TF → gene links that the cell's open chromatin (ATAC) allows.
 - **Method:** for each cell, CeSpGRN estimates a network from the RNA of that cell and its neighbours (cells with similar expression). A penalty with weight β pushes it away from edges outside the prior.
-- **A step the paper doesn't mention:** after solving, the code sets every edge outside the prior to zero. So the output can only contain edges the prior allows.
+- **A step the paper doesn't mention:** after solving, the code sets every edge outside the prior to zero. So the output can only contain edges the prior allows. We call this **the cut**.
 - **Output:** the average of 16 runs (4 neighbourhood bandwidths × 4 sparsity levels), one network per cell.
 
 **How we score**, per cell against the true network, then averaged over cells:
-- **AUPRC:** overall accuracy of the edge ranking. 1 is perfect, random is about 0.02 here. We use the paper's own version, which rewards tied scores (see finding 6).
+- **AUPRC:** overall accuracy of the edge ranking. 1 is perfect; random is about 0.02 here.
+  - **The paper's AUPRC** draws a straight line from the start of the curve to the first real point. That rewards tied scores: a plain yes/no prediction gets roughly (1 + precision) / 2. Priors, and CeSpGRN after the cut, are full of ties.
+  - **Standard AUPRC** (`average_precision_score`) does not reward ties. We report both.
 - **Early precision:** of the top edges (as many as there are true edges), the share that is true.
 
-## Main result
+## The paper's claim
 
-**CeSpGRN's accuracy comes from the ATAC prior and the hard cut, not from the RNA.** Take the prior away and CeSpGRN is close to random. Keep the cut but drop everything else CeSpGRN does, and the score barely moves. Within the prior, the RNA adds only a small gain in ordering the edges, and plain correlation gives the same gain.
+![The paper's Figure 2](ablation/figures/paper_fig2.png)
 
-Drawn with the authors' own plotting code (Fig. 2b), with the prior added next to CeSpGRN:
+**Figure 1.** The paper's Fig. 2 (Zhang et al. 2026, p. 6). (a) Accuracy when only TF information is given. (b) Accuracy with scATAC-seq: CeSpGRN (ATAC) reaches AUPRC 0.76 and early precision 0.69 at noise 0.01, far above the other methods. The paper does not show the ATAC prior on its own.
 
-![Fig. 2b on the rebuilt prior](ablation/figures/fig2b_rebuilt.png)
+## Experiments
+
+### 1. Reproduce the paper's Fig. 2b · done
+
+We rebuilt the benchmark (the code that made it is not published, see [Setup](#setup)) and ran CeSpGRN exactly as the authors' code does. We land below the paper's score (0.66 vs 0.76), with the same pattern: with the prior CeSpGRN does well, without it CeSpGRN is close to random.
+
+![Fig. 2b redrawn on our rebuild](ablation/figures/fig2b_rebuilt.png)
+
+**Figure 2.** Fig. 2b redrawn with the authors' own plotting code, adding the prior on its own. Bars are the mean over 8000 cells, error bars one standard deviation, paper's AUPRC. Two chromatin settings: the simulator's default (most chromatin closed, a weaker prior) and more open chromatin (our main setting, closest to the paper).
 
 | 8000 cells, noise 0.01 | Paper's AUPRC | Standard AUPRC | Early precision |
 |---|---|---|---|
@@ -32,53 +48,54 @@ Drawn with the authors' own plotting code (Fig. 2b), with the prior added next t
 | CeSpGRN without prior | 0.02 | 0.02 | 0.01 |
 | *Paper: CeSpGRN with ATAC prior* | *0.76* | | *0.69* |
 
-On the paper's AUPRC the prior alone even scores higher than CeSpGRN. That is partly the metric: it rewards tied scores, and a prior is nothing but ties. On standard AUPRC CeSpGRN is slightly ahead (0.55 vs 0.52), and on early precision they are equal.
+### 2. Score the prior on its own · done
 
-This is the setting closest to the paper (more open chromatin, see [Setup](#setup)). With the simulator's default chromatin, which gives a weaker prior, the picture is the same: CeSpGRN 0.47 and the prior alone 0.47 on the paper's AUPRC (0.20 and 0.18 standard), 0.71 for both on early precision. All numbers are one seed at noise 0.01.
+The authors' evaluation code scores the prior on its own, but the paper does not report it. In every setting we tried, the prior alone scores about as well as CeSpGRN with that prior (Figure 2): 0.72 vs 0.66 on the paper's AUPRC and 0.74 vs 0.74 on early precision. With the default chromatin both are 0.47.
 
-## What the experiments show
+### 3. Shuffled RNA · running
 
-**The hard cut does all the work** (experiment 4). We switched CeSpGRN's two uses of the prior on and off separately:
+We shuffle each gene's expression across cells. Each gene keeps its values, but every relation between genes is destroyed, so the RNA carries no regulatory signal. If CeSpGRN with the real prior scores the same on shuffled RNA, the RNA contributes nothing measurable. A small test on our first rebuild pointed that way (0.37 shuffled vs 0.35 real).
 
-| 8000 cells | Paper's AUPRC | Standard AUPRC |
-|---|---|---|
-| Neither penalty nor cut | 0.02 | 0.02 |
-| Penalty only (what the paper describes) | 0.03 | 0.03 |
-| Cut only | 0.65 | 0.54 |
-| Penalty and cut (what the code does) | 0.66 | 0.55 |
+### 4. Penalty or cut: which one does the work? · done
 
-The penalty in the paper's equation barely changes the network. The unmentioned cut accounts for almost the whole score.
+CeSpGRN uses the prior twice: as a penalty in its equation (what the paper describes) and as the cut afterwards (what the code also does). We switched them on and off separately. The penalty alone barely changes the network (0.03, near random). The cut alone gives almost the whole score (0.65 of 0.66).
 
-**Inside the prior, the RNA adds a little, and any RNA signal does** (experiment 6). Among the edges the prior allows, 74% are true. CeSpGRN's ranking of those edges scores 0.78 standard AUPRC, against 0.74 for a random order. CeSpGRN without the prior, ranking the same edges, scores 0.78 as well. So the small gain comes from correlations in the RNA, not from CeSpGRN's use of the prior.
+![Experiment 4](ablation/figures/exp4_penalty_vs_cut.png)
 
-**A simple baseline** (experiment 7) is still running at full size. In the small test, plain correlation over all cells, with the same prior and cut, scored the same as CeSpGRN (0.74 vs 0.74).
+**Figure 3.** CeSpGRN with neither, one or both uses of the prior. Mean over 8000 cells, error bars one standard deviation.
+
+### 5. Worse priors · running
+
+We give CeSpGRN the same RNA with worse priors: a random prior with the same number of edges per cell, one prior shared by all cells, and a noisier prior (noise 0.3). If CeSpGRN follows its prior down, the prior is doing the work. In the small test on our first rebuild, the random prior made CeSpGRN collapse to near zero (0.03), and the shared prior did slightly better than the per-cell one.
+
+### 6. Inside the prior: does the RNA order the allowed edges? · done
+
+Among the edges the prior allows, 74% are true. We score only those edges: does CeSpGRN put the true ones first? A little: 0.78 against 0.74 for a random order. CeSpGRN without the prior, ranking the same edges, scores 0.78 as well. So the small gain comes from correlations in the RNA, not from how CeSpGRN uses the prior.
+
+![Experiment 6](ablation/figures/exp6_inside_prior.png)
+
+**Figure 4.** Standard AUPRC counted only over the edges the prior allows. "Random order" is the share of true edges among them, which is what a random ordering scores. Mean over 8000 cells, error bars one standard deviation.
+
+### 7. A simple baseline with the same prior · running
+
+We give plain correlation the same prior and cut: once the correlation over all cells, and once CeSpGRN's own per-cell correlation (its input, before the solver). If these match CeSpGRN, the solver adds nothing. In the small test (400 cells), plain correlation over all cells scored the same as CeSpGRN (0.74 vs 0.74).
+
+### 8. Standard AUPRC · done (experiments 3 and 5 still to add)
+
+On the paper's AUPRC the prior alone scores higher than CeSpGRN. With standard AUPRC the order flips: CeSpGRN is slightly ahead (0.55 vs 0.52, and 0.20 vs 0.18 with default chromatin). So "the prior beats CeSpGRN" is partly an effect of the metric. The paper's AUPRC also inflates all scores: with default chromatin it reads 0.47 where standard AUPRC gives 0.20.
+
+![Experiment 8](ablation/figures/exp8_standard_auprc.png)
+
+**Figure 5.** The paper's AUPRC next to standard AUPRC, for CeSpGRN and the prior alone, in both chromatin settings. Mean over 8000 cells, error bars one standard deviation.
+
+Dropped for now: a sweep over β (the paper's Fig. S4a already shows it is flat), GENIE3 as a second baseline (only if experiment 7 is unclear), noise 0.1, and more seeds (only if a result is borderline).
 
 ## What else we found
 
-1. **The prior is a hard filter, not only a penalty.** The paper describes a soft penalty (weight β) on edges outside the prior. The code also sets every edge outside the prior to zero after solving, so CeSpGRN can only ever report edges the prior allows.
-2. **The paper's β experiment cannot separate penalty from filter.** In the code, "without β" means "without any prior", and any β above zero switches the filter on. That explains why accuracy barely moves when β goes from 0.01 to 100.
-3. **The simulated prior is built from the true network.** The simulator links a TF to a chromatin region only if that TF truly regulates a gene next to the region. The prior therefore contains the answer; chromatin only decides which of those edges are closed in each cell.
-4. **The authors scored the prior on its own, but did not report it.** Their evaluation code computes it; it is missing from the paper and supplement.
-5. **The benchmark cannot be rebuilt from what is published.** The code that builds the priors and adds noise is not public, and two unstated choices change the prior's quality a lot: how noise is added and how much chromatin is open. We have asked the authors for their settings.
-6. **The AUPRC used in the paper flatters tied scores.** It draws a straight line from the start of the curve to the first real point, so a plain yes/no prediction scores roughly (1 + precision) / 2. Priors, and CeSpGRN after the filter, are full of ties. We report it so our numbers compare with the paper's, next to standard AUPRC, which does not reward ties.
-7. **Single settings may tell a different story than the average.** The paper averages CeSpGRN over 16 settings (4 bandwidths × 4 sparsity levels λ). In a small test (400 cells), no single setting beats the prior's AUPRC, but some rank the prior's edges better: early precision up to 0.93 against the prior's 0.81. So within the prior, the RNA may help pick out the true edges, and averaging hides it. The full-size runs now score every setting to check this.
-
-## Plan
-
-Everything runs on one dataset: 8000 cells, seed 0, noise 0.01, more open chromatin. We add seeds only if a result is borderline. Experiments 3 and 5 share one GPU job; the rest reuse experiment 1's saved results and run on CPU.
-
-| # | Experiment | Compute | Status |
-|---|---|---|---|
-| 1 | Reproduce Fig. 2b on our rebuilt benchmark | GPU | done |
-| 2 | Score the ATAC prior alone, without RNA | CPU | done |
-| 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | running |
-| 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | done |
-| 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | running |
-| 6 | Score only edges inside the prior, to see what the RNA adds | CPU | done |
-| 7 | Give plain correlation the same prior and filter | CPU | running |
-| 8 | Rescore everything with standard AUPRC | CPU | done (experiments 3 and 5 still to add) |
-
-Dropped for now: the β sweep (the paper's Fig. S4a already shows it is flat), GENIE3 as a second baseline (only if experiment 7 is unclear), and noise 0.1.
+1. **The paper's β experiment cannot separate penalty from cut.** In the code, "without β" means "without any prior", and any β above zero switches the cut on. That explains why accuracy barely moves when β goes from 0.01 to 100 (their Fig. S4a), and experiment 4 confirms it.
+2. **The simulated prior is built from the true network.** The simulator links a TF to a chromatin region only if that TF truly regulates a gene next to the region. The prior therefore contains the answer; chromatin only decides which of those edges are closed in each cell. That makes the prior unrealistically informative.
+3. **The benchmark cannot be rebuilt from what is published.** The code that builds the priors and adds noise is not public, and two unstated choices change the prior's quality a lot: how noise is added and how much chromatin is open. We have asked the authors for their settings.
+4. **Single settings may tell a different story than the average** (400 cells only). In a small test, no single setting beat the prior's AUPRC, but some ordered the prior's edges better: early precision up to 0.93 against the prior's 0.81. Experiment 6 asks the same question at full size for the average and finds only a small gain.
 
 ## Setup
 
@@ -86,7 +103,7 @@ Dropped for now: the β sweep (the paper's Fig. S4a already shows it is flat), G
 - **More open chromatin.** By default the simulator makes 80% of ATAC values zero, which leaves most true edges outside the prior. We use 20% zeros, because that gives a prior as strong as the paper's scores imply. We picked it to match the paper, so the default is kept as a check.
 - **A first rebuild** used the simulator's defaults and added noise to every empty entry, which at 0.01 already tripled the region–gene links. Its prior was much weaker (AUPRC 0.37) but gave the same conclusion. Details in [`journal.md`](journal.md).
 - **Method and scoring.** The authors' own CeSpGRN code, settings and metrics; see the table below.
-- **Code.** Everything we wrote is in [`ablation/`](ablation/README.md).
+- **Code.** Everything we wrote is in [`ablation/`](ablation/README.md). Figures are drawn by `ablation/plots/`.
 
 ### How we run CeSpGRN
 
@@ -106,7 +123,7 @@ Exactly the settings of the authors' code and of supplement Note 1.4:
 
 Where we differ, and why it is safe:
 
-- **The hard cut** is in the code but not in the paper. We follow the code, because that is what produced their numbers.
+- **The cut** is in the code but not in the paper. We follow the code, because that is what produced their numbers.
 - **Two speed changes** (see [Changes to upstream code](#changes-to-upstream-code)) give identical scores to four decimals.
 - **The two missing modules** (`cov`, `bmk`) are rebuilt from the paper and the authors' commented-out code.
 - **The data and the prior** are rebuilt, because the code that made them is not published (see above).
