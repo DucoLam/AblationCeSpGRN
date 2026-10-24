@@ -51,11 +51,11 @@ Everything runs on one dataset: 8000 cells, seed 0, noise 0.01, more open chroma
 | 1 | Reproduce Fig. 2b on our rebuilt benchmark | GPU | done |
 | 2 | Score the ATAC prior alone, without RNA | CPU | done |
 | 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | queued |
-| 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |
+| 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | running |
 | 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | queued |
-| 6 | Score only edges inside the prior, to see what the RNA adds | CPU | planned |
-| 7 | Give plain correlation the same prior and filter | CPU | planned |
-| 8 | Rescore everything with standard AUPRC | CPU | planned |
+| 6 | Score only edges inside the prior, to see what the RNA adds | CPU | running |
+| 7 | Give plain correlation the same prior and filter | CPU | running |
+| 8 | Rescore everything with standard AUPRC | CPU | running |
 
 Dropped for now: the β sweep (the paper's Fig. S4a already shows it is flat), GENIE3 as a second baseline (only if experiment 7 is unclear), and noise 0.1.
 

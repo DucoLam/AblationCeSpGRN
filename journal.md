@@ -274,6 +274,27 @@ Fig. 2b and Fig. S3c redrawn from our scores with upstream's own plotting code (
 
 What we cannot tell: their `atac.p_zero` is unknown. We chose 0.2 because it reproduces their numbers, so the match is circular, and the gap could also come from their noise model, `region.distrib` or ground-truth definition. Real scATAC-seq is typically far sparser than even scMultiSim's default (well over 90% zeros per cell), so a dense setting would also be unrealistic. Asked in the email to the authors (setting 1); revisit when they reply. A neutral way to show it, if needed: CeSpGRN and the prior alone against `atac.p_zero` (0.95, 0.8, 0.5, 0.2). Duco decided not to run it for now.
 
+### 2026-10-24 · Experiments 4, 6, 7, 8: 400-cell test, and full-size jobs submitted
+
+**Finding (preliminary, 400 cells, `pz0.2_links`, noise 0.01).** Upstream AUPRC / EP / standard AUPRC:
+
+| Network | AUPRC | EP | Standard AUPRC |
+|---|---|---|---|
+| Neither penalty nor cut (β = 0) | 0.026 | 0.020 | 0.026 |
+| Cut only (β = 0, then cut) | 0.739 | 0.811 | 0.634 |
+| Penalty only (β = 1, no cut) | 0.033 | 0.052 | 0.034 |
+| Penalty + cut (paper) | 0.744 | 0.811 | 0.639 |
+| Global correlation + cut | 0.742 | 0.810 | 0.637 |
+| Kernel correlation + cut | 0.720 | 0.810 | 0.616 |
+| Prior (ATAC) alone | 0.774 | 0.810 | 0.600 |
+
+- Exp 4: the hard cut does all the work; the penalty alone barely moves the network (0.033).
+- Exp 8: with standard AUPRC, CeSpGRN is slightly *above* the prior (0.639 vs 0.600); upstream's AUPRC reversed this because the prior is all ties.
+- Exp 6: inside the prior, CeSpGRN's ranking has AUPRC 0.866 against a baseline of 0.81 (share of true edges); RNA without prior (β = 0) gives 0.861, so the small gain comes from the RNA correlation itself.
+- Exp 7: a plain global correlation with the same prior and cut matches CeSpGRN (0.742 vs 0.744; standard 0.637 vs 0.639).
+
+**How.** Job 13000542 (CPU, 6:29), `ablation/pipeline/6_cpu_experiments.py` (c331fde) on `simulated_400_..._pz0.2_links`, output in `ablation/results/scmultisim/test_cpu_experiments_400/`. Full size on `simulated_8000_..._pz0.2_links`, output in `<results>/cpu/`: exp 4 job 13000543, exp 6 13000544, exp 7 (with kernel correlation) 13000545, exp 8 13000546 (also on the default-chromatin dataset).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
