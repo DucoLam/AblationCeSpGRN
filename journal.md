@@ -258,7 +258,9 @@ Caveat: upstream's early precision takes the top k edges with k = min(true edges
 
 Same pattern as the old prior and the 400-cell test: CeSpGRN is below its prior on AUPRC and level on early precision. The prior is weaker at 8000 cells than at 400 (0.721 vs 0.774), and CeSpGRN's AUPRC lands 0.10 below the paper's. Its early precision is above the paper's. No per-setting scores: the job started before 2169483.
 
-**How.** Prep 13000277 (simulation with `atac.p_zero` 0.2, build with `--noise links`), GPU job 13000278 (3:09 h). Scores from `ablation/results/scmultisim/simulated_8000_20_10_100_0.01_0_0_4_pz0.2_links/{beta_1_atac,beta_0}/scores.csv` on DAIC. The `atac.p_zero` 0.8 run (13000276) is still running. Experiments 3 + 5 on this dataset submitted by FALCON as 13000448.
+**How.** Prep 13000277 (simulation with `atac.p_zero` 0.2, build with `--noise links`), GPU job 13000278 (3:09 h). Scores from `ablation/results/scmultisim/simulated_8000_20_10_100_0.01_0_0_4_pz0.2_links/{beta_1_atac,beta_0}/scores.csv` on DAIC.
+
+**Default chromatin (`atac.p_zero` 0.8, `_links`)**, GPU job 13000276 (3:17 h), prep 13000275: CeSpGRN (ATAC) 0.4660 / 0.7131, prior (ATAC) alone 0.4739 / 0.7117, prior (TF) 0.6162 / 0.2327, w/o β 0.0250 / 0.0221. Same pattern on the weaker prior: CeSpGRN within 0.01 of its prior on both metrics. Experiments 3 + 5 on this dataset submitted by FALCON as 13000448.
 
 ## Changes to upstream code
 
