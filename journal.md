@@ -295,6 +295,27 @@ What we cannot tell: their `atac.p_zero` is unknown. We chose 0.2 because it rep
 
 **How.** Job 13000542 (CPU, 6:29), `ablation/pipeline/6_cpu_experiments.py` (c331fde) on `simulated_400_..._pz0.2_links`, output in `ablation/results/scmultisim/test_cpu_experiments_400/`. Full size on `simulated_8000_..._pz0.2_links`, output in `<results>/cpu/`: exp 4 job 13000543, exp 6 13000544, exp 7 (with kernel correlation) 13000545, exp 8 13000546 (also on the default-chromatin dataset).
 
+### 2026-10-24 · Experiments 4, 6, 8 at full size: the cut does the work, the RNA adds little
+
+**Finding (8000 cells, `pz0.2_links`, noise 0.01).** Upstream AUPRC / EP / standard AUPRC:
+
+| Network | AUPRC | EP | Standard AUPRC |
+|---|---|---|---|
+| Neither (β = 0) | 0.024 | 0.015 | 0.024 |
+| Cut only | 0.651 | 0.743 | 0.537 |
+| Penalty only | 0.027 | 0.029 | 0.028 |
+| Penalty + cut (paper) | 0.655 | 0.744 | 0.545 |
+| Prior (ATAC) alone | 0.721 | 0.742 | 0.522 |
+| Prior (TF) | 0.617 | 0.234 | 0.234 |
+
+Inside the prior (exp 6): share true 0.742 (baseline); CeSpGRN AUPRC 0.781, top-k precision 0.753; penalty only identical; β = 0 (RNA only) 0.780 / 0.750.
+
+Default chromatin (`_links`), exp 8: CeSpGRN 0.466 / 0.713 / 0.198, prior 0.474 / 0.712 / 0.175, TF prior 0.616 / 0.233 / 0.233, w/o β 0.025 / 0.022 / 0.025.
+
+Same pattern as the 400-cell test: the cut carries the score, the penalty alone does almost nothing, and on standard AUPRC CeSpGRN is slightly above the prior (0.545 vs 0.522), reversing upstream's AUPRC. Upstream's AUPRC inflates the default-chromatin numbers most (0.47 vs 0.20 standard).
+
+**How.** Jobs 13000543 (exp 4, 1:12), 13000544 (exp 6, 0:20), 13000546 (exp 8, 2:00); `ablation/pipeline/6_cpu_experiments.py`; output in `ablation/results/scmultisim/<dataset>/cpu/exp<N>_scores.csv` on DAIC. Exp 7 (13000545) still running.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
