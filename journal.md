@@ -119,11 +119,22 @@ Duco chose the smallest plan that still answers the question. After experiment 1
 - CPU only, from the reproduction's saved results: exp 2, exp 4 as the 2 × 2 only, exp 6, exp 8, and exp 7 with the correlation stand-in only.
 - Dropped: the β sweep (Fig. S4a already shows it is flat), GENIE3 (unless exp 7 is unclear), and the correlation stand-in and random weights from exp 3.
 
+### 2026-10-24 · Upstream's solver is too slow to run as published; batched square root
+
+**Finding.** Upstream's ADMM update computes, in every iteration, a matrix square root per cell with `scipy.linalg.sqrtm`, one matrix at a time on the CPU. At 8000 cells that is about 820,000 calls per CeSpGRN run; one call took 57 ms on the DAIC login node, so one run takes hours and a dataset (32 runs) days, longer than DAIC allows. The first jobs (12999995–12999997) ran at 7% GPU and 935% CPU use and were cancelled after about 75 minutes.
+
+**Change.** The matrix (Yᵀ·Y/4 + I/ρ) is symmetric positive definite, so its square root is unique. `src/g_admm.py` now computes it for all cells of a batch at once from an eigendecomposition in float64 (`batched_sqrtm_spd`), in both solvers.
+
+**How we checked it is equivalent.** On a test matrix the two methods differ by 1.2 × 10⁻¹⁴. Rerunning the 400-cell test dataset end to end (job 13000023) gave identical scores to four decimals (CeSpGRN ATAC 0.3542 / 0.5517, without β 0.0268 / 0.0229) and a largest value-by-value difference of 3.0 × 10⁻⁷ in the ensemble GRNs (values up to 0.47), i.e. 32-bit rounding. A λ run now takes about 33 s at 400 cells on 4 CPUs.
+
+**Resubmitted.** 6 GPU jobs, 13000041–13000046 (`ablation/results/full_run_jobs_v3.txt` on DAIC).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
 
 - `src/g_admm.py`: `torch.eig` → `torch.linalg.eig` / `eigvals`, `torch.cholesky` → `torch.linalg.cholesky` (removed from PyTorch; same results).
 - `src/bmk_beeline.py`: `precision_recall_curve(probas_pred=…)` → `y_score=…` and `np.int` → `int` (removed from scikit-learn / NumPy; same results).
+- `src/g_admm.py`: the ADMM square root, one `scipy.linalg.sqrtm` per cell, → `batched_sqrtm_spd`, one batched eigendecomposition (speed only; same result up to 32-bit rounding, see the 2026-10-24 entry).
 
 Upstream's scripts also import `bmk` and `cov`, which were never published. Our versions live in `ablation/lib/` (not in `src/`): `cov.est_cov_para` follows the commented-out version in `g_admm.py`; `bmk.calc_scores_para` uses upstream's own metrics.
