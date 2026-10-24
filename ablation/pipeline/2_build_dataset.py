@@ -12,8 +12,13 @@ RT_i is rebuilt per cell from that cell's GRN with scMultiSim's own rule (.regio
 a TF is linked to a region when it positively regulates a gene behind that region. This matches
 the per-cell region_tf_{i}.txt files upstream reads; --region-tf global uses scMultiSim's single RT.
 
-Noise (fp, "false positive connections", Note 1.8): every 0 in RG and RT becomes 1 with
-probability fp, only in the copies used for the prior. The same noise applies to all cells.
+Noise (fp), only in the copies used for the prior, the same for all cells:
+    --noise per-entry  every 0 in RG and RT becomes 1 with probability fp ("false positive
+                       connections", Note 1.8). With ~150 real links among ~36,000 entries this adds
+                       far more false links than there are real ones, even at fp = 0.01.
+    --noise links      a share fp of the real region-gene links is moved to random wrong pairs:
+                       "the error rate of the association between the chromatin regions and genes"
+                       (Fig. 2 caption). RT stays noise-free.
 
 Outputs match what upstream's scripts compute from their text files:
     counts_rna_true.npy  (cells x genes)
@@ -43,6 +48,7 @@ def main():
     parser.add_argument("--fp", type=float, required=True, help="noise level, e.g. 0.01 or 0.1")
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--region-tf", choices=["per-cell", "global"], default="per-cell")
+    parser.add_argument("--noise", choices=["per-entry", "links"], default="per-entry")
     args = parser.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
@@ -71,8 +77,18 @@ def main():
 
     # Noise on the copies of the cross-modality matrices used for the prior
     rng = np.random.default_rng([args.seed, round(args.fp * 1e6)])
-    region_gene_noisy = region_gene | (rng.random(region_gene.shape) < args.fp)
-    region_tf_noise = rng.random((nregions, nregs)) < args.fp
+    if args.noise == "per-entry":
+        region_gene_noisy = region_gene | (rng.random(region_gene.shape) < args.fp)
+        region_tf_noise = rng.random((nregions, nregs)) < args.fp
+    else:
+        links, empty = np.flatnonzero(region_gene), np.flatnonzero(~region_gene)
+        n_moved = round(args.fp * len(links))
+        region_gene_noisy = region_gene.copy().ravel()
+        region_gene_noisy[rng.choice(links, n_moved, replace=False)] = False
+        region_gene_noisy[rng.choice(empty, n_moved, replace=False)] = True
+        region_gene_noisy = region_gene_noisy.reshape(region_gene.shape)
+        region_tf_noise = np.zeros((nregions, nregs), dtype=bool)
+        print(f"moved {n_moved} of {len(links)} region-gene links")
 
     is_open = atac > 0
     masks_atac = np.ones((ncells, ngenes, ngenes), dtype=np.uint8)
