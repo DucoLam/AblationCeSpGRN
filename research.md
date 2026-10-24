@@ -56,7 +56,9 @@ With little noise and more open chromatin, the prior alone scores about what the
 | Rebuilt ATAC prior alone | 0.77 | 0.81 |
 | *Paper: CeSpGRN with ATAC prior* | *0.76* | *0.69* |
 
-The full-size run on the rebuilt prior is queued.
+**Single settings tell a different story than the average.** The paper averages CeSpGRN over 16 settings (4 bandwidths × 4 sparsity levels λ). Scored one by one on the same small test, no single setting beats the prior's AUPRC (best 0.71 vs 0.77). But at larger bandwidths and moderate λ, CeSpGRN's top edges are clearly more accurate than the prior's: early precision 0.87 to 0.93, against 0.81. So within the prior, the RNA does help pick out the true edges, and the paper's averaging hides that. This is from 400 cells and one seed; the full-size runs now score every setting too.
+
+The full-size run on the rebuilt prior is running.
 
 **First look at experiments 3 and 5** (small test on the old prior; will be redone on the rebuilt one):
 

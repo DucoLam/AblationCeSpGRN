@@ -227,6 +227,21 @@ With every gene's expression shuffled across cells, CeSpGRN scores as well as wi
 
 **Decision (Duco).** Experiments 2–8 run on `simulated_8000_20_10_100_0.01_0_0_4_pz0.2_links` (raw: `raw/cells8000_seed0_pz0.2`). Chosen because its prior is about as strong as the paper's scores imply; this was picked to match the paper, so the `atac.p_zero` 0.8 run (`_links`) stays as a check that conclusions hold on a weaker prior. Will be replaced by the authors' settings if they send them.
 
+### 2026-10-24 · Per-setting scores: single settings rank the prior's edges better than the ensemble does
+
+**Finding.** On the 400-cell rebuilt dataset (`pz0.2_links`, noise 0.01) the ensemble reproduces the earlier test exactly (0.744 / 0.811; prior alone 0.774 / 0.810). Scored one by one, with the same prior cut, the 16 settings with the ATAC prior (AUPRC / EP):
+
+| Bandwidth | λ 0.01 | λ 0.05 | λ 0.1 | λ 0.5 |
+|---|---|---|---|---|
+| 0.01 | 0.676 / 0.811 | 0.596 / 0.812 | 0.551 / 0.813 | 0.477 / 0.816 |
+| 0.1 | 0.694 / 0.816 | 0.614 / 0.839 | 0.563 / 0.863 | 0.192 / 0.370 |
+| 1 | 0.699 / 0.809 | 0.648 / 0.874 | 0.621 / 0.928 | 0.138 / 0.267 |
+| 10 | 0.712 / 0.818 | 0.674 / 0.915 | 0.617 / 0.933 | 0.000 / 0.000 |
+
+No single setting beats the prior's AUPRC (best 0.712 vs 0.774), but at bandwidth ≥ 1 and λ 0.05–0.1 early precision rises to 0.87–0.93 against the prior's 0.81: within the prior, the RNA does help pick out the true edges. Averaging over all 16 settings (the paper's ensemble) washes this out, partly because λ 0.5 gives near-empty networks. Without the prior every setting stays at 0.01–0.03. Preliminary: 400 cells, one seed.
+
+**How.** Job 13000404 (CPU, 32:45; same dataset took 32:58 without per-setting scoring): `3_run_cespgrn.py` at 2169483 into `ablation/results/scmultisim/test_setting_scores_400/`, then `4_ensemble.py`. Per-cell scores in `beta_1_atac/scores_per_setting.csv` and `beta_0/scores_per_setting.csv` on DAIC.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
