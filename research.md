@@ -15,7 +15,7 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 5. **The benchmark cannot be rebuilt from what is published.** The code that builds the priors and adds noise is not public. We rebuilt it (see [Setup](#setup)); our datasets match the paper's sizes.
 6. **The AUPRC used in the paper flatters tied scores.** It draws a straight line from the start of the curve to the first real point, so a plain yes/no prediction scores roughly (1 + precision) / 2. Priors, and CeSpGRN after the filter, are full of ties. We keep this metric for now so our numbers compare with the paper's.
 7. **In our rebuild, noise makes the prior larger, not just worse.** See the prior quality table below. How the paper injects noise is not specified, so results at high noise depend heavily on that choice.
-8. **On the full benchmark, CeSpGRN does not beat the prior it is given.** See the first table below.
+8. **On the full benchmark, CeSpGRN does not beat the prior it is given.** But our prior is much weaker than the paper's, so we do not yet reach the paper's scores. See [Results](#results).
 
 ## Results
 
@@ -28,10 +28,26 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 | 0.1 | CeSpGRN with ATAC prior | 0.25 – 0.28 | 0.27 – 0.29 |
 | | ATAC prior alone | 0.50 – 0.54 | 0.25 – 0.26 |
 | either | CeSpGRN without prior | 0.02 – 0.03 | 0.02 – 0.06 |
+| 0.01 | *Paper: CeSpGRN with ATAC prior* | *0.76* | *0.69* |
+| 0.1 | *Paper: CeSpGRN with ATAC prior* | *0.41* | *0.39* |
 
 At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as accurate as the prior's, and its AUPRC is lower. At high noise, where the prior is mostly wrong, the RNA helps a little with ranking (early precision +0.01 to +0.03). Without the prior CeSpGRN is close to random, as in the paper.
 
-We do not reach the paper's 0.76. Our rebuilt prior is weaker than the authors' must be, and the paper does not report how good its prior was on its own.
+**Why we stay below the paper.** Our prior is much weaker than the authors' must be. Scoring variants of it on one dataset (seed 0, noise 0.01) shows why:
+
+| Prior variant | Precision | Recall | AUPRC | Early precision |
+|---|---|---|---|---|
+| Ours | 0.45 | 0.26 | 0.37 | 0.45 |
+| Also use negative edges | 0.46 | 0.31 | 0.39 | 0.45 |
+| Treat every region as open | 0.42 | 0.80 | 0.61 | 0.42 |
+| Both of the above | 0.41 | 0.92 | 0.67 | 0.41 |
+| Both, and no noise | 0.71 | 0.91 | 0.81 | 0.71 |
+
+- **Which regions count as open is the main cause.** We call a region open in a cell when it has any ATAC reads. That is only 20% of regions per cell, and it drops three quarters of the true edges. The paper does not say how it decides openness.
+- **Our noise is too strong.** Even at 0.01 it halves the share of true edges in the prior's links. We add false links between regions and genes and between regions and TFs, but the paper's Fig. 2 caption describes noise only on the regions–genes side. This also explains why, unlike in the paper, our prior gets *better* on AUPRC at noise 0.1.
+- **Negative edges matter little.** The simulator only links a TF to a region when it activates the gene. Repressions, 23% of true edges, can never enter the prior.
+
+A clean prior on its own (last row) already scores about what the paper reports for CeSpGRN.
 
 **Quality of our prior** (range over 3 seeds):
 

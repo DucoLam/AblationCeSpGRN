@@ -146,6 +146,25 @@ Duco chose the smallest plan that still answers the question. After experiment 1
 
 **How.** Jobs 13000041–13000046 (all COMPLETED, 3:08–3:35 h each). Means of `AUPRC (abs)` and `Early Precision (abs)` per model over the per-cell rows of `ablation/results/scmultisim/<dataset>/{beta_1_atac,beta_0}/scores.csv` on DAIC.
 
+### 2026-10-24 · Why our prior is weaker than the paper's: openness rule and noise
+
+**Finding.** The paper's Fig. 2b gives CeSpGRN (ATAC) AUPRC 0.759 / Eprec 0.692 at noise 0.01 and 0.413 / 0.393 at noise 0.1. We get 0.33–0.37 / 0.45–0.53 and 0.25–0.28 / 0.27–0.29. Prior variants on seed 0, noise 0.01 (every 8th cell, upstream's metrics):
+
+| Prior variant | Precision | Recall | AUPRC | EP |
+|---|---|---|---|---|
+| ours: positive edges, open = ATAC > 0, noise 0.01 | 0.454 | 0.265 | 0.369 | 0.453 |
+| both signs | 0.455 | 0.312 | 0.390 | 0.452 |
+| every region open | 0.424 | 0.797 | 0.613 | 0.424 |
+| both signs, every region open | 0.412 | 0.924 | 0.669 | 0.413 |
+| both signs, every region open, no noise | 0.709 | 0.907 | 0.809 | 0.709 |
+
+- Open = ATAC > 0 (true counts) leaves 20% of the 330 regions open per cell and is the main loss of recall (0.80 → 0.26).
+- Noise 0.01 on both region×gene and region×TF cuts precision from 0.71 to 0.41. The Fig. 2 caption defines "noise level" as "the error rate of the association between the chromatin regions and genes", i.e. region×gene only, and possibly in both directions (missing as well as false links). Our stronger noise is also why our prior's AUPRC rises at noise 0.1 while the paper's CeSpGRN drops.
+- 23% of true (cell, edge) pairs are negative; `.regionToTFMatrix` never links a repressing TF, but this costs only 0.05 recall.
+- 92% of genes have at least one linked region.
+
+**How.** Job 13000189, `ablation/tools/probe_prior_recall.py` on `ablation/data/scMultiSim/raw/cells8000_seed0`; noise drawn as in `2_build_dataset.py`. Paper numbers read from Fig. 2b (main text p. 6).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
