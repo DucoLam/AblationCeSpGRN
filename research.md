@@ -6,6 +6,17 @@ We ask where that gain comes from: does CeSpGRN learn the network from the RNA, 
 
 Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeSpGRN](https://github.com/PeterZZQ/CeSpGRN) `v1.0.0`. The detailed log, with dates, job IDs and code references, is in [`journal.md`](journal.md).
 
+## How CeSpGRN works, in short
+
+- **Input:** gene expression (RNA) for every cell, and per cell a **prior**: the TF → gene links that the cell's open chromatin (ATAC) allows.
+- **Method:** for each cell, CeSpGRN estimates a network from the RNA of that cell and its neighbours (cells with similar expression). A penalty with weight β pushes it away from edges outside the prior.
+- **A step the paper doesn't mention:** after solving, the code sets every edge outside the prior to zero. So the output can only contain edges the prior allows.
+- **Output:** the average of 16 runs (4 neighbourhood bandwidths × 4 sparsity levels), one network per cell.
+
+**How we score**, per cell against the true network, then averaged over cells:
+- **AUPRC:** overall accuracy of the edge ranking. 1 is perfect, random is about 0.02 here. We use the paper's own version, which rewards tied scores (see finding 6).
+- **Early precision:** of the top edges (as many as there are true edges), the share that is true.
+
 ## Main result
 
 **CeSpGRN does not beat the prior it is given.** On our rebuild of the paper's benchmark, the ATAC prior on its own scores at least as well as CeSpGRN with that prior. Drawn with the authors' own plotting code (Fig. 2b), with the prior added next to CeSpGRN:
@@ -53,8 +64,31 @@ Dropped for now: the β sweep (the paper's Fig. S4a already shows it is flat), G
 - **Data.** Simulated with scMultiSim using the settings encoded in the authors' dataset names, giving the paper's 110 genes and 330 regions. Where the paper is silent we chose: the simulator's example tree and 20 cell identity factors; a region counts as open when it has any ATAC reads; noise moves a share of the real region–gene links to wrong pairs (the paper calls it an "error rate" of that association).
 - **More open chromatin.** By default the simulator makes 80% of ATAC values zero, which leaves most true edges outside the prior. We use 20% zeros, because that gives a prior as strong as the paper's scores imply. We picked it to match the paper, so the default is kept as a check.
 - **A first rebuild** used the simulator's defaults and added noise to every empty entry, which at 0.01 already tripled the region–gene links. Its prior was much weaker (AUPRC 0.37) but gave the same conclusion. Details in [`journal.md`](journal.md).
-- **Method and scoring.** The authors' own CeSpGRN code, settings ensemble and metrics.
+- **Method and scoring.** The authors' own CeSpGRN code, settings and metrics; see the table below.
 - **Code.** Everything we wrote is in [`ablation/`](ablation/README.md).
+
+### How we run CeSpGRN
+
+Exactly the settings of the authors' code and of supplement Note 1.4:
+
+| Setting | Supplement / paper | Authors' script | Ours |
+|---|---|---|---|
+| Bandwidth σ | 0.01, 0.1, 1, 10 | same | same |
+| Sparsity λ | 0.01, 0.05, 0.1, 0.5 | same | same |
+| Prior weight β | 1 | 1 | 1 (and 0 for the no-prior run) |
+| Neighbourhood size Ni | 100 | 100 | 100 |
+| k-NN graph | smallest k > 5 that connects the graph | same | same code |
+| Final network | average over all 16 σ × λ | same | same |
+| Covariance | neighbourhood-weighted Kendall's τ | module never published | rebuilt from their commented-out code, weighted |
+| Solver settings | not stated | α 2, ρ 1.7, 100 iterations, batches of 512 | same |
+| Normalisation | not stated | library size + log1p, PCA with 20 components | same |
+
+Where we differ, and why it is safe:
+
+- **The hard cut** is in the code but not in the paper. We follow the code, because that is what produced their numbers.
+- **Two speed changes** (see [Changes to upstream code](#changes-to-upstream-code)) give identical scores to four decimals.
+- **The two missing modules** (`cov`, `bmk`) are rebuilt from the paper and the authors' commented-out code.
+- **The data and the prior** are rebuilt, because the code that made them is not published (see above).
 
 ## Changes to upstream code
 
