@@ -223,6 +223,10 @@ With every gene's expression shuffled across cells, CeSpGRN scores as well as wi
 
 **How.** Job 13000190 (CPU, 1:40 h): `ablation/pipeline/run_followup.sh` on `simulated_400_20_10_100_0.01_0_0_4` (variants from `5_make_variants.py`, seed 0). Scores in `ablation/results/scmultisim/followup_test_400/` on DAIC.
 
+### 2026-10-24 · Main dataset for the follow-up experiments: `atac.p_zero` 0.2, links noise
+
+**Decision (Duco).** Experiments 2–8 run on `simulated_8000_20_10_100_0.01_0_0_4_pz0.2_links` (raw: `raw/cells8000_seed0_pz0.2`). Chosen because its prior is about as strong as the paper's scores imply; this was picked to match the paper, so the `atac.p_zero` 0.8 run (`_links`) stays as a check that conclusions hold on a weaker prior. Will be replaced by the authors' settings if they send them.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

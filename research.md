@@ -75,7 +75,7 @@ More noise lets through about 5 times more edges, which catches about 3 times mo
 
 ## Plan
 
-After experiment 1, everything runs on one dataset (seed 0, noise 0.01). We add seeds only if a result is borderline. Experiments 3 and 5 share one GPU job; the rest reuse experiment 1's saved results and run on CPU.
+After experiment 1, everything runs on one dataset: the rebuilt prior with more open chromatin (seed 0, noise 0.01). We chose it because it comes closest to the paper; the default-chromatin version is kept as a check. We add seeds only if a result is borderline. Experiments 3 and 5 share one GPU job; the rest reuse experiment 1's saved results and run on CPU.
 
 | # | Experiment | Compute | Status |
 |---|---|---|---|
