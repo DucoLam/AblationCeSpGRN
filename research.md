@@ -48,6 +48,16 @@ At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as acc
 
 With little noise and more open chromatin, the prior alone scores about what the paper reports for CeSpGRN. We are asking the authors for their exact settings.
 
+**Rebuilt prior.** We now count noise as a share of the real region–gene links that is wrong, and simulate with more open chromatin. A small test (400 cells, one seed, noise 0.01) lands close to the paper, and CeSpGRN again does not beat its prior:
+
+| | AUPRC | Early precision |
+|---|---|---|
+| CeSpGRN with rebuilt ATAC prior | 0.74 | 0.81 |
+| Rebuilt ATAC prior alone | 0.77 | 0.81 |
+| *Paper: CeSpGRN with ATAC prior* | *0.76* | *0.69* |
+
+The full-size run on the rebuilt prior is queued.
+
 **Quality of our prior** (range over 3 seeds):
 
 | Noise | Precision | Recall | Share of all edges it allows |
@@ -64,6 +74,7 @@ After experiment 1, everything runs on one dataset (seed 0, noise 0.01). We add 
 | # | Experiment | Compute | Status |
 |---|---|---|---|
 | 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | done |
+| 1b | Repeat experiment 1 on the rebuilt prior: seed 0, noise 0.01, default and more open chromatin | GPU | queued |
 | 2 | Score the ATAC prior alone, without RNA | CPU | done |
 | 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | planned |
 | 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |

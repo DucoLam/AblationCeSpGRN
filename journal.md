@@ -189,6 +189,24 @@ Ruled out as main causes: smoothing openness over the 51 neighbouring cells on t
 
 Asked the authors (draft by Duco, not yet sent) for the scMultiSim settings, how openness and region×TF are defined, how noise is applied, and the data or scripts.
 
+### 2026-10-24 · Rebuilt prior: 400-cell test, and experiment 1 resubmitted
+
+**Change.** `2_build_dataset.py --noise links` moves a share fp of the real region×gene links to random empty pairs (1 of 148 at 0.01, 15 at 0.1); region×TF stays noise-free. `submit_reproduction.sh` takes `P_ZERO` (scMultiSim `atac.p_zero`) and `NOISE`; non-default values add `_pz<P_ZERO>` / `_<NOISE>` to directory names. Old datasets rebuild unchanged (default per-entry).
+
+**Test (400 cells, seed 0), AUPRC / EP, mean over cells:**
+
+| Dataset | Prior precision / recall | Prior ATAC | CeSpGRN ATAC | CeSpGRN w/o β |
+|---|---|---|---|---|
+| old: per-entry noise 0.01 | 0.552 / 0.234 | 0.401 / 0.552 | 0.354 / 0.552 | 0.027 / 0.023 |
+| links 0.01 | 0.799 / 0.200 | 0.509 / 0.799 | 0.493 / 0.799 | 0.027 / 0.023 |
+| links 0.1 | 0.739 / 0.150 | 0.455 / 0.739 | 0.443 / 0.739 | 0.027 / 0.023 |
+| pz0.2, links 0.01 | 0.810 / 0.732 | 0.774 / 0.810 | 0.744 / 0.811 | 0.026 / 0.020 |
+| pz0.2, links 0.1 | 0.771 / 0.664 | 0.722 / 0.771 | 0.681 / 0.771 | 0.026 / 0.020 |
+
+With `atac.p_zero` 0.2 and links noise 0.01, CeSpGRN reaches AUPRC 0.744 (paper: 0.759), and again stays at or below its prior. Noise now lowers precision and recall, as in the paper.
+
+**How.** Test jobs 13000227–13000232 (CPU, `NUM_CELLS=400 SEEDS=0 FPS="0.01 0.1" GPU=0`, `P_ZERO` 0.8 and 0.2, `NOISE=links`). Full runs, 8000 cells, seed 0, noise 0.01: prep 13000275 + GPU 13000276 (`_links`), prep 13000277 + GPU 13000278 (`_pz0.2_links`).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
