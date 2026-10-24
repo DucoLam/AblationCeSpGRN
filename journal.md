@@ -131,7 +131,7 @@ Duco chose the smallest plan that still answers the question. After experiment 1
 
 ### 2026-10-24 · Full reproduction: CeSpGRN does not beat its prior
 
-**Finding.** At 8000 cells CeSpGRN with the ATAC prior never beats the prior alone on AUPRC. At noise 0.01 its early precision equals the prior's (difference ≤ 0.001); at noise 0.1 it is 0.02–0.04 higher. Mean over the 8000 cells, upstream's AUPRC:
+**Finding.** At 8000 cells CeSpGRN with the ATAC prior never beats the prior alone on AUPRC. At noise 0.01 its early precision equals the prior's (difference ≤ 0.001); at noise 0.1 it is 0.01–0.03 higher. Mean over the 8000 cells, upstream's AUPRC:
 
 | Noise, seed | CeSpGRN ATAC (AUPRC / EP) | Prior ATAC | Prior TF | CeSpGRN w/o β |
 |---|---|---|---|---|

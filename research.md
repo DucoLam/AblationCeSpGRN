@@ -29,7 +29,7 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 | | ATAC prior alone | 0.50 – 0.54 | 0.25 – 0.26 |
 | either | CeSpGRN without prior | 0.02 – 0.03 | 0.02 – 0.06 |
 
-At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as accurate as the prior's, and its AUPRC is lower. At high noise, where the prior is mostly wrong, the RNA helps a little with ranking (early precision +0.02 to +0.03). Without the prior CeSpGRN is close to random, as in the paper.
+At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as accurate as the prior's, and its AUPRC is lower. At high noise, where the prior is mostly wrong, the RNA helps a little with ranking (early precision +0.01 to +0.03). Without the prior CeSpGRN is close to random, as in the paper.
 
 We do not reach the paper's 0.76. Our rebuilt prior is weaker than the authors' must be, and the paper does not report how good its prior was on its own.
 
