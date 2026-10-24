@@ -244,6 +244,22 @@ Caveat: upstream's early precision takes the top k edges with k = min(true edges
 
 **How.** Job 13000404 (CPU, 32:45; same dataset took 32:58 without per-setting scoring): `3_run_cespgrn.py` at 2169483 into `ablation/results/scmultisim/test_setting_scores_400/`, then `4_ensemble.py`. Per-cell scores in `beta_1_atac/scores_per_setting.csv` and `beta_0/scores_per_setting.csv` on DAIC.
 
+### 2026-10-24 · Experiment 1 on the rebuilt prior (8000 cells): CeSpGRN still does not beat its prior
+
+**Finding.** Main dataset (`simulated_8000_20_10_100_0.01_0_0_4_pz0.2_links`, seed 0), mean over 8000 cells, AUPRC / EP:
+
+| | AUPRC | EP |
+|---|---|---|
+| CeSpGRN (ATAC), ensemble | 0.6553 | 0.7439 |
+| Prior (ATAC) alone | 0.7211 | 0.7423 |
+| Prior (TF) | 0.6166 | 0.2342 |
+| CeSpGRN w/o β | 0.0237 | 0.0148 |
+| Paper, CeSpGRN (ATAC), noise 0.01 | 0.759 | 0.692 |
+
+Same pattern as the old prior and the 400-cell test: CeSpGRN is below its prior on AUPRC and level on early precision. The prior is weaker at 8000 cells than at 400 (0.721 vs 0.774), and CeSpGRN's AUPRC lands 0.10 below the paper's. Its early precision is above the paper's. No per-setting scores: the job started before 2169483.
+
+**How.** Prep 13000277 (simulation with `atac.p_zero` 0.2, build with `--noise links`), GPU job 13000278 (3:09 h). Scores from `ablation/results/scmultisim/simulated_8000_20_10_100_0.01_0_0_4_pz0.2_links/{beta_1_atac,beta_0}/scores.csv` on DAIC. The `atac.p_zero` 0.8 run (13000276) is still running. Experiments 3 + 5 on this dataset submitted by FALCON as 13000448.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

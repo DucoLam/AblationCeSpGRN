@@ -58,7 +58,16 @@ With little noise and more open chromatin, the prior alone scores about what the
 
 **Single settings tell a different story than the average.** The paper averages CeSpGRN over 16 settings (4 bandwidths × 4 sparsity levels λ). Scored one by one on the same small test, no single setting beats the prior's AUPRC (best 0.71 vs 0.77). But at larger bandwidths and moderate λ, CeSpGRN's top edges are clearly more accurate than the prior's: early precision 0.87 to 0.93, against 0.81. So within the prior, the RNA does help pick out the true edges, and the paper's averaging hides that. This is from 400 cells and one seed; the full-size runs now score every setting too.
 
-The full-size run on the rebuilt prior is running.
+**Full size on the rebuilt prior** (8000 cells, one seed, noise 0.01) confirms it:
+
+| | AUPRC | Early precision |
+|---|---|---|
+| CeSpGRN with rebuilt ATAC prior | 0.66 | 0.74 |
+| Rebuilt ATAC prior alone | 0.72 | 0.74 |
+| CeSpGRN without prior | 0.02 | 0.01 |
+| *Paper: CeSpGRN with ATAC prior* | *0.76* | *0.69* |
+
+CeSpGRN again scores below its prior on AUPRC and the same on early precision. The run with the default chromatin setting is still going.
 
 **First look at experiments 3 and 5** (small test on the old prior; will be redone on the rebuilt one):
 
@@ -82,11 +91,11 @@ After experiment 1, everything runs on one dataset: the rebuilt prior with more 
 | # | Experiment | Compute | Status |
 |---|---|---|---|
 | 1 | Reproduce Fig. 2b: 3 seeds, noise 0.01 and 0.1, 8000 cells | GPU | done |
-| 1b | Repeat experiment 1 on the rebuilt prior: seed 0, noise 0.01, default and more open chromatin | GPU | queued |
+| 1b | Repeat experiment 1 on the rebuilt prior: seed 0, noise 0.01, default and more open chromatin | GPU | main dataset done; default running |
 | 2 | Score the ATAC prior alone, without RNA | CPU | done |
-| 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | tested small; waiting for the rebuilt prior |
+| 3 | Remove the RNA signal: run CeSpGRN on shuffled RNA | GPU | queued |
 | 4 | Test the soft penalty and the hard filter separately (2 × 2) | CPU | planned |
-| 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | tested small; waiting for the rebuilt prior |
+| 5 | Give CeSpGRN worse priors: a random prior of the same density, one prior shared by all cells, and noise 0.3 | GPU | queued |
 | 6 | Score only edges inside the prior, to see what the RNA adds | CPU | planned |
 | 7 | Give plain correlation the same prior and filter | CPU | planned |
 | 8 | Rescore everything with standard AUPRC | CPU | planned |
