@@ -187,7 +187,7 @@ Ruled out as main causes: smoothing openness over the 51 neighbouring cells on t
 
 **How.** Jobs 13000191 (`ablation/tools/probe_prior_rules.py`, full grid on `raw/cells8000_seed0`) and 13000192 (re-simulation with `1_simulate.R 0 <out> 8000 <atac_p_zero>` into `raw/pzero_check/`, then the short grid). Link counts with awk on `region_to_gene.tsv`.
 
-Asked the authors (draft by Duco, not yet sent) for the scMultiSim settings, how openness and region×TF are defined, how noise is applied, and the data or scripts.
+Asked the authors (Duco emailed the corresponding author, Xiuwei Zhang, on 2026-10-24) for the scMultiSim settings, how openness and region×TF are defined, how noise is applied, and the data or scripts.
 
 ### 2026-10-24 · Rebuilt prior: 400-cell test, and experiment 1 resubmitted
 

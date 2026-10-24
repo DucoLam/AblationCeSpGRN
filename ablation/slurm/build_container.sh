@@ -17,6 +17,10 @@
 
 set -euo pipefail
 
+echo "== ${SLURM_JOB_NAME:-local} (job ${SLURM_JOB_ID:-none}) on $(hostname), started $(date '+%Y-%m-%d %H:%M')"
+echo "What: ${JOB_DESC:-Build the Apptainer image ablation/ablation-cespgrn.sif from container_pixi.def}"
+echo
+
 SIF=ablation-cespgrn.sif
 OUT=ablation/$SIF
 export APPTAINER_CACHEDIR=/tmp/$USER/apptainer-cache

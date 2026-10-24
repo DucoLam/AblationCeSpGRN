@@ -61,7 +61,8 @@ for seed in $SEEDS; do
   done
   dep=()
   if [ ${#steps[@]} -gt 0 ]; then
-    prep=$(submit -J "prep-s${seed}${pz_suffix}${noise_suffix}" --qos=short --time=01:00:00 --cpus-per-task=2 --mem=32G \
+    prep=$(JOB_DESC="Simulate seed $seed (${NUM_CELLS} cells, atac.p_zero $P_ZERO) if missing, and build its datasets for noise $FPS ($NOISE noise)" \
+      submit -J "prep-s${seed}${pz_suffix}${noise_suffix}" --qos=short --time=01:00:00 --cpus-per-task=2 --mem=32G \
       ablation/slurm/run.sh bash -c "set -e; $(IFS=';'; echo "${steps[*]}")")
     dep=(--dependency=afterok:"$prep")
     echo "seed $seed: prepare data $prep"
@@ -70,7 +71,8 @@ for seed in $SEEDS; do
   for fp in $FPS; do
     data=$(dataset "$fp" "$seed")
     name=$(basename "$data")
-    job=$(submit -J "cespgrn-${fp}-s${seed}${pz_suffix}${noise_suffix}" ${dep[@]+"${dep[@]}"} \
+    job=$(JOB_DESC="Fig. 2b reproduction on $name: CeSpGRN for all bandwidths and lambdas with the ATAC prior (beta 1) and without it (beta 0), then ensemble and scores" \
+      submit -J "cespgrn-${fp}-s${seed}${pz_suffix}${noise_suffix}" ${dep[@]+"${dep[@]}"} \
       --qos="$QOS" --time="$TIME" --cpus-per-task="$CPUS" --mem="$MEM" ${GPU_FLAG[@]+"${GPU_FLAG[@]}"} \
       ablation/slurm/run.sh bash ablation/pipeline/run_dataset.sh "$data" "ablation/results/scmultisim/$name")
     echo "  $name: CeSpGRN + scores $job"

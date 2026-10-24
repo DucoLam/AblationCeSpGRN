@@ -46,7 +46,7 @@ At low noise CeSpGRN adds nothing to its prior: its top edges are exactly as acc
 - **Our noise is far too strong.** We add each missing region–gene link with probability equal to the noise level. There are only 147 real links among 36,300 possible ones, so noise 0.01 already adds about 360 false links. The paper calls the noise level an "error rate", which more likely means a share of the real links.
 - **The simulator's default leaves most chromatin closed.** By default 80% of the simulated ATAC values are zero, so only 20% of regions are open in a cell and the prior misses most true edges. The paper does not say which value it used. Other choices (smoothing openness over neighbouring cells, counting repressing edges) change little.
 
-With little noise and more open chromatin, the prior alone scores about what the paper reports for CeSpGRN. We are asking the authors for their exact settings.
+With little noise and more open chromatin, the prior alone scores about what the paper reports for CeSpGRN. We have asked the authors for their exact settings.
 
 **Rebuilt prior.** We now count noise as a share of the real region–gene links that is wrong, and simulate with more open chromatin. A small test (400 cells, one seed, noise 0.01) lands close to the paper, and CeSpGRN again does not beat its prior:
 

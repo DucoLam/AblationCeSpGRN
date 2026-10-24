@@ -52,11 +52,11 @@ The environment (Python, PyTorch with CUDA, R with scMultiSim) is defined in `pi
 
 ```bash
 # from the repo root, on DAIC
-bash ablation/slurm/sbatch.sh ablation/slurm/build_container.sh                     # builds ablation/ablation-cespgrn.sif
+JOB_DESC="Build the container image" bash ablation/slurm/sbatch.sh ablation/slurm/build_container.sh                     # builds ablation/ablation-cespgrn.sif
 bash ablation/slurm/submit_reproduction.sh                                          # the full reproduction (6 GPU jobs, + 3 CPU jobs if data is missing)
 NUM_CELLS=400 SEEDS=0 FPS=0.01 GPU=0 QOS=short TIME=01:00:00 CPUS=4 MEM=8G \
   bash ablation/slurm/submit_reproduction.sh                                        # small CPU test run
-bash ablation/slurm/sbatch.sh -J my-run ablation/slurm/run.sh python path/to/script.py   # any command in the container
+JOB_DESC="What this job does" bash ablation/slurm/sbatch.sh -J my-run ablation/slurm/run.sh python path/to/script.py   # any command in the container
 ```
 
 Logs: `ablation/slurm/logs/<date>/<time>_<job name>_<job id>.log`, written by SLURM itself so tools like lazyslurm find them.

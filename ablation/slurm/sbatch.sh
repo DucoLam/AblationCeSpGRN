@@ -8,6 +8,15 @@
 # Usage (from the repo root), same arguments as sbatch:
 #   bash ablation/slurm/sbatch.sh -J kernel-sweep ablation/slurm/run.sh python path/to/script.py
 #   bash ablation/slurm/sbatch.sh --gres=gpu:1 ablation/slurm/run.sh python ...
+#
+# JOB_DESC (required): one sentence saying what the job does. run.sh prints it at the top of the log.
+#   JOB_DESC="Score prior variants on seed 0" bash ablation/slurm/sbatch.sh -J probe ablation/slurm/run.sh python ...
+
+if [ -z "${JOB_DESC:-}" ]; then
+  echo "Set JOB_DESC to one sentence saying what the job does, e.g. JOB_DESC=\"...\" bash $0 ..." >&2
+  exit 1
+fi
+export JOB_DESC
 
 log_dir=ablation/slurm/logs/$(date +%Y-%m-%d)
 mkdir -p "$log_dir"

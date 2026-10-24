@@ -15,8 +15,14 @@
 #   bash ablation/slurm/sbatch.sh -J kernel-sweep ablation/slurm/run.sh python path/to/script.py --arg value
 #   bash ablation/slurm/sbatch.sh --qos=medium --time=12:00:00 ablation/slurm/run.sh python ...   # override resources
 #   bash ablation/slurm/sbatch.sh --gres=gpu:1 ablation/slurm/run.sh python ...                    # on a GPU
+# Set JOB_DESC to one sentence saying what the job does; it is printed at the top of the log.
 
 SIF=${SIF:-ablation/ablation-cespgrn.sif}
+
+echo "== ${SLURM_JOB_NAME:-local} (job ${SLURM_JOB_ID:-none}) on $(hostname), started $(date '+%Y-%m-%d %H:%M')"
+echo "What: ${JOB_DESC:-no description given (set JOB_DESC when submitting)}"
+echo "Runs: $*"
+echo
 
 # Expose the host's NVIDIA driver only when SLURM gave us a GPU
 NV=()
