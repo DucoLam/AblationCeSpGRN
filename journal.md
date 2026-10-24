@@ -207,6 +207,22 @@ With `atac.p_zero` 0.2 and links noise 0.01, CeSpGRN reaches AUPRC 0.744 (paper:
 
 **How.** Test jobs 13000227–13000232 (CPU, `NUM_CELLS=400 SEEDS=0 FPS="0.01 0.1" GPU=0`, `P_ZERO` 0.8 and 0.2, `NOISE=links`). Full runs, 8000 cells, seed 0, noise 0.01: prep 13000275 + GPU 13000276 (`_links`), prep 13000277 + GPU 13000278 (`_pz0.2_links`).
 
+### 2026-10-24 · Experiments 3 and 5, code check on the old 400-cell prior: shuffled RNA changes nothing
+
+**Finding (preliminary).** A test of the experiment 3 + 5 code on the old 400-cell dataset (old prior: `atac.p_zero` 0.8, per-entry noise 0.01) already shows the pattern we expect. Not the main result: the rebuilt prior replaces this dataset.
+
+| 400 cells, old prior (AUPRC / EP) | CeSpGRN | Prior alone |
+|---|---|---|
+| Real ATAC prior (earlier test, jobs 12997127–38) | 0.354 / 0.552 | 0.401 / 0.552 |
+| Shuffled RNA, real prior | 0.368 / 0.553 | |
+| Random prior, same density per cell | 0.025 / 0.024 | 0.029 / 0.024 |
+| One prior shared by all cells, same density | 0.372 / 0.570 | 0.415 / 0.570 |
+| Noise 0.3 (per-entry) | 0.240 / 0.240 | 0.616 / 0.234 |
+
+With every gene's expression shuffled across cells, CeSpGRN scores as well as with the real RNA. A random prior of the same density makes it collapse. A prior shared by all cells scores slightly higher than the per-cell one. At per-entry noise 0.3 the prior allows nearly every TF edge, so it scores like the TF prior.
+
+**How.** Job 13000190 (CPU, 1:40 h): `ablation/pipeline/run_followup.sh` on `simulated_400_20_10_100_0.01_0_0_4` (variants from `5_make_variants.py`, seed 0). Scores in `ablation/results/scmultisim/followup_test_400/` on DAIC.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
