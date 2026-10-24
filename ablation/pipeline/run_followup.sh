@@ -4,14 +4,16 @@
 #   3_run_cespgrn.py    CeSpGRN (β = 1) with each worse prior, and with shuffled RNA + the real prior
 #   4_ensemble.py       ensemble, prior cut and scores per run, plus each prior alone
 #
-# Usage (from the repo root): bash ablation/pipeline/run_followup.sh [data dir] [raw dir] [results dir]
+# Usage (from the repo root): bash ablation/pipeline/run_followup.sh [data dir] [raw dir] [results dir] [noise mode]
+# The noise mode (per-entry or links) must match how the dataset was built; it is used for the noise-0.3 prior.
 
 set -euo pipefail
 data=${1:-ablation/data/scMultiSim/simulated_8000_20_10_100_0.01_0_0_4}
 raw=${2:-ablation/data/scMultiSim/raw/cells8000_seed0}
 out=${3:-ablation/results/scmultisim/followup_seed0_noise0.01}
+noise_mode=${4:-per-entry}
 
-python ablation/pipeline/5_make_variants.py --data "$data" --raw "$raw" --seed 0
+python ablation/pipeline/5_make_variants.py --data "$data" --raw "$raw" --seed 0 --noise-mode "$noise_mode"
 
 # experiment 5: same RNA, worse priors
 python ablation/pipeline/3_run_cespgrn.py --data "$data" --out-root "$out/priors" --betas 1 --priors random shared noise0.3

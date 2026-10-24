@@ -5,7 +5,8 @@ Experiment 5, worse priors, written into the dataset dir as extra masks (1 = edg
     masks_random.npy    per cell, the same number of allowed edges as the ATAC prior, placed at random
     masks_shared.npy    one prior for every cell: the edges allowed in the most cells, as many as the
                         ATAC prior allows on average (removes cell-specificity, keeps the density)
-    masks_noise0.3.npy  the ATAC prior built with noise 0.3 instead of 0.01 (2_build_dataset.py --fp 0.3)
+    masks_noise0.3.npy  the ATAC prior built with noise 0.3 instead of 0.01 (2_build_dataset.py --fp 0.3,
+                        with the same --noise mode as the dataset)
 
 Experiment 3, RNA without signal, written as a new dataset dir <data>_shuffledRNA: each gene's
 expression permuted across cells independently (keeps every gene's distribution, destroys
@@ -13,7 +14,7 @@ co-expression and the cell neighbourhoods), with the same ground truth and prior
 
 Usage (from the repo root):
     python ablation/pipeline/5_make_variants.py --data ablation/data/scMultiSim/<dataset> \
-        --raw ablation/data/scMultiSim/raw/<raw> --seed 0
+        --raw ablation/data/scMultiSim/raw/<raw> --seed 0 [--noise-mode links]
 """
 import argparse
 import json
@@ -41,6 +42,8 @@ def main():
     parser.add_argument("--raw", required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--noise", type=float, default=0.3)
+    parser.add_argument("--noise-mode", choices=["per-entry", "links"], default="per-entry",
+                        help="2_build_dataset.py --noise; use the mode the dataset was built with")
     args = parser.parse_args()
     rng = np.random.default_rng(args.seed)
 
@@ -73,7 +76,8 @@ def main():
     # noisier prior: the same build step with a higher noise level
     noisy_dir = args.data.rstrip("/") + f"_noise{args.noise:g}"
     subprocess.run([sys.executable, os.path.join(os.path.dirname(__file__), "2_build_dataset.py"),
-                    "--raw", args.raw, "--out", noisy_dir, "--fp", str(args.noise), "--seed", str(args.seed)], check=True)
+                    "--raw", args.raw, "--out", noisy_dir, "--fp", str(args.noise), "--seed", str(args.seed),
+                    "--noise", args.noise_mode], check=True)
     shutil.copyfile(os.path.join(noisy_dir, "masks_atac.npy"), os.path.join(args.data, f"masks_noise{args.noise:g}.npy"))
 
     for name in ["random", "shared", f"noise{args.noise:g}"]:
