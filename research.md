@@ -64,4 +64,7 @@ Dropped for now: the β sweep (the paper's Fig. S4a already shows it is flat), a
 
 ## Changes to upstream code
 
-Only fixes for functions removed from PyTorch, scikit-learn and NumPy; results are unchanged. Two helper modules the authors' scripts import were never published; we wrote our own in `ablation/lib/`. Details in [`journal.md`](journal.md#changes-to-upstream-code).
+- **Compatibility fixes** for functions removed from PyTorch, scikit-learn and NumPy.
+- **A speed fix.** As published, the solver takes a matrix square root for one cell at a time, which would take days per dataset at 8000 cells. We compute them for all cells at once. On the small test dataset the scores are identical.
+
+Neither change affects the results. Two helper modules the authors' scripts import were never published; we wrote our own in `ablation/lib/`. Details in [`journal.md`](journal.md#changes-to-upstream-code).
