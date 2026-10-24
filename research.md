@@ -19,7 +19,11 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 
 ## Results
 
-**Reproduction of the paper's main figure** (Fig. 2b): 8000 cells, mean over cells, range over 3 seeds.
+**Reproduction of the paper's main figure** (Fig. 2b), drawn with the authors' own plotting code. We add the prior on its own next to CeSpGRN; we did not run the other methods.
+
+![Fig. 2b reproduction](ablation/figures/fig2b_reproduction.png)
+
+8000 cells, mean over cells, range over 3 seeds:
 
 | Noise | | AUPRC | Early precision |
 |---|---|---|---|
@@ -59,6 +63,9 @@ With little noise and more open chromatin, the prior alone scores about what the
 **Single settings tell a different story than the average.** The paper averages CeSpGRN over 16 settings (4 bandwidths × 4 sparsity levels λ). Scored one by one on the same small test, no single setting beats the prior's AUPRC (best 0.71 vs 0.77). But at larger bandwidths and moderate λ, CeSpGRN's top edges are clearly more accurate than the prior's: early precision 0.87 to 0.93, against 0.81. So within the prior, the RNA does help pick out the true edges, and the paper's averaging hides that. This is from 400 cells and one seed; the full-size runs now score every setting too.
 
 **Full size on the rebuilt prior** (8000 cells, one seed, noise 0.01) confirms it:
+
+![Fig. 2b on the rebuilt prior](ablation/figures/fig2b_rebuilt.png)
+
 
 | | AUPRC | Early precision |
 |---|---|---|

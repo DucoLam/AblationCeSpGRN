@@ -262,6 +262,12 @@ Same pattern as the old prior and the 400-cell test: CeSpGRN is below its prior 
 
 **Default chromatin (`atac.p_zero` 0.8, `_links`)**, GPU job 13000276 (3:17 h), prep 13000275: CeSpGRN (ATAC) 0.4660 / 0.7131, prior (ATAC) alone 0.4739 / 0.7117, prior (TF) 0.6162 / 0.2327, w/o β 0.0250 / 0.0221. Same pattern on the weaker prior: CeSpGRN within 0.01 of its prior on both metrics. Experiments 3 + 5 on this dataset submitted by FALCON as 13000448.
 
+### 2026-10-24 · Paper-style figures
+
+Fig. 2b and Fig. S3c redrawn from our scores with upstream's own plotting code (`test/scripts_scmultisim/eval_scores_new.py`: seaborn barplots, Set2, error bars = SD over all cells of all seeds, and boxplots for S3c), adding "Prior (ATAC)" next to CeSpGRN. `ablation/figures/fig2b_reproduction.png` (first prior, 3 seeds × noise 0.01/0.1), `figS3c_beta.png` (same datasets, β = 0 vs 1), `fig2b_rebuilt.png` (rebuilt prior, seed 0, noise 0.01, `atac.p_zero` 0.8 vs 0.2).
+
+**How.** `uv run ablation/plots/fig2.py` locally on the `scores.csv` files copied from DAIC (`rsync` of `ablation/results/scmultisim/simulated_8000_*/{beta_1_atac,beta_0}/scores.csv`); the container has no seaborn.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
