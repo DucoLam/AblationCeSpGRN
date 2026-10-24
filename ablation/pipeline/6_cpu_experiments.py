@@ -12,7 +12,10 @@ ties; experiment 8). The upper triangle is used for the standard AUPRC; upstream
              log-normalised RNA, and (--kernel) CeSpGRN's own input, the kernel-weighted Kendall
              correlation per cell, averaged over the same 4 bandwidths
     --exp 8  standard AUPRC for the networks 4_ensemble.py scored: CeSpGRN with and without the
-             prior, and the ATAC and TF priors alone
+             prior, and the ATAC and TF priors alone (a network whose run is missing is skipped, e.g.
+             no β = 0 run for the shuffled-RNA and worse-prior runs of run_followup.sh)
+
+--prior picks the run and mask: beta_1_<prior>/ and masks_<prior>.npy (default atac).
 
 Output: <out>/exp<N>_scores.csv (one row per cell and network) and a summary on stdout.
 
@@ -95,6 +98,7 @@ def main():
     parser.add_argument("--results", required=True, help="results dir of 3_run_cespgrn.py / 4_ensemble.py for this dataset")
     parser.add_argument("--out", required=True)
     parser.add_argument("--kernel", action="store_true", help="exp 7: also the kernel-weighted correlation per cell (slow)")
+    parser.add_argument("--prior", default="atac", help="beta_1_<prior>/ run and masks_<prior>.npy to use")
     parser.add_argument("--bandwidths", type=float, nargs="+", default=[0.01, 0.1, 1, 10])
     parser.add_argument("--truncate", type=int, default=100)
     args = parser.parse_args()
@@ -102,9 +106,10 @@ def main():
     os.makedirs(args.out, exist_ok=True)
 
     G_gt = np.load(os.path.join(args.data, "graph_gt.npy"))
-    allowed = np.load(os.path.join(args.data, "masks_atac.npy")) == 0
+    allowed = np.load(os.path.join(args.data, f"masks_{args.prior}.npy")) == 0
     UPPER = np.triu_indices(G_gt.shape[1], k=1)
-    beta1, beta0 = os.path.join(args.results, "beta_1_atac"), os.path.join(args.results, "beta_0")
+    beta1, beta0 = os.path.join(args.results, f"beta_1_{args.prior}"), os.path.join(args.results, "beta_0")
+    has_beta0 = os.path.exists(os.path.join(beta0, "cespgrn_ensemble.npy"))
     scores = []
 
     if args.exp == 4:
@@ -120,6 +125,8 @@ def main():
         for model, G in [("CeSpGRN (paper)", lambda: np.load(os.path.join(beta1, "cespgrn_ensemble.npy"))),
                          ("Penalty only", lambda: ensemble_without_cut(beta1)),
                          ("RNA only (beta 0)", lambda: np.load(os.path.join(beta0, "cespgrn_ensemble.npy")))]:
+            if model.startswith("RNA only") and not has_beta0:
+                continue
             scores.append(score_inside_prior(G(), G_gt, allowed, model, njobs))
 
     elif args.exp == 7:
@@ -148,10 +155,12 @@ def main():
 
     elif args.exp == 8:
         prior_tf = 1 - np.load(os.path.join(args.data, "masks_tf.npy"))
-        for model, G in [("CeSpGRN (ATAC)", lambda: np.load(os.path.join(beta1, "cespgrn_ensemble.npy"))),
-                         ("Prior (ATAC)", lambda: allowed.astype(np.float32)),
+        for model, G in [(f"CeSpGRN ({args.prior.upper()})", lambda: np.load(os.path.join(beta1, "cespgrn_ensemble.npy"))),
+                         (f"Prior ({args.prior.upper()})", lambda: allowed.astype(np.float32)),
                          ("Prior (TF)", lambda: prior_tf.astype(np.float32)),
                          ("CeSpGRN (w/o beta)", lambda: np.load(os.path.join(beta0, "cespgrn_ensemble.npy")))]:
+            if model == "CeSpGRN (w/o beta)" and not has_beta0:
+                continue
             scores.append(score(G(), G_gt, model, njobs))
 
     scores = pd.concat(scores, ignore_index=True)
