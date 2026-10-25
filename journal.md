@@ -353,6 +353,10 @@ With shuffled RNA, CeSpGRN equals its prior; the RNA's contribution is ~0.02 sta
 
 **How.** Exp 3: CeSpGRN run in FALCON's job 13000448 (`run_followup.sh`, results `ablation/results/scmultisim/followup_seed0_pz0.2_links/shuffledRNA/beta_1_atac/`, 6:41 h for the whole job), rescored with `6_cpu_experiments.py --exp 8/6` in job 13000591 (output `shuffledRNA/cpu/`). Exp 7: job 13000545 (1:35 h, `--exp 7 --kernel`, output `<main results>/cpu/exp7_scores.csv`). Paired differences computed locally from the copied per-cell CSVs. Figures `exp3_shuffled_rna.png`, `exp7_correlation.png` (`ablation/plots/experiments.py`).
 
+### 2026-10-25 · Summary figure
+
+`ablation/figures/summary.png` (`ablation/plots/experiments.py`): CeSpGRN + ATAC (0.655 / 0.545 / 0.744), ATAC + shuffled RNA (0.635 / 0.525 / 0.744), ATAC only (0.721 / 0.522 / 0.742), CeSpGRN only (0.024 / 0.024 / 0.015); upstream AUPRC / standard AUPRC / EP, from the exp 8 scores of the main dataset and the shuffled-RNA run. Figure 1 in research.md; the other figures moved up by one.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.

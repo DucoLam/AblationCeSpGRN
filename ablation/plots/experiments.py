@@ -147,3 +147,19 @@ barplot(ax, data, "model", "score", "metric", order)
 ax.set_ylabel("Score")
 finish(fig, ax, "A simple baseline with the same prior and cut", os.path.join(out_dir, "exp7_correlation.png"))
 print("wrote exp3 and exp7")
+
+# Summary: the four combinations in one figure
+labels = {"CeSpGRN + ATAC": "CeSpGRN (ATAC)", "CeSpGRN only": "CeSpGRN (w/o beta)", "ATAC only": "Prior (ATAC)"}
+main8 = load(MAIN, 8)
+frames = [main8[main8["model"] == src].assign(model=label) for label, src in labels.items()]
+frames.append(pd.read_csv(os.path.join(shuffled, "exp8_scores.csv"), index_col=0).query("model == 'CeSpGRN (ATAC)'")
+              .assign(model="ATAC + shuffled RNA"))
+summary_metrics = {**METRICS, "Early Precision (abs)": "Early precision"}
+data = pd.concat(frames, ignore_index=True).melt(id_vars="model", value_vars=list(summary_metrics),
+                                                 var_name="metric", value_name="score").replace({"metric": summary_metrics})
+order = ["CeSpGRN + ATAC", "ATAC + shuffled RNA", "ATAC only", "CeSpGRN only"]
+fig, ax = plt.subplots(figsize=(15, 6.5))
+barplot(ax, data, "model", "score", "metric", order)
+ax.set_ylabel("Score")
+finish(fig, ax, "Where CeSpGRN's accuracy comes from", os.path.join(out_dir, "summary.png"))
+print("wrote summary")

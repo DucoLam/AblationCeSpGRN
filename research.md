@@ -16,6 +16,10 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 - **A simpler method does better.** Plain correlation over all cells, with the same prior and cut, beats CeSpGRN in 90% of cells (experiment 7).
 - **The paper's metric hides this.** Its AUPRC rewards tied scores, which inflates priors; on standard AUPRC the differences become visible (experiment 8).
 
+![Where CeSpGRN's accuracy comes from](ablation/figures/summary.png)
+
+**Figure 1.** The four combinations side by side. *CeSpGRN + ATAC*: CeSpGRN with the real RNA and the ATAC prior, as in the paper. *ATAC + shuffled RNA*: the same, but with each gene shuffled across cells, so the RNA carries no signal. *ATAC only*: the prior on its own, no RNA. *CeSpGRN only*: CeSpGRN with the real RNA and no prior. Mean over 8000 cells, error bars one standard deviation.
+
 All numbers are 8000 cells, one seed, noise 0.01, unless stated otherwise. Differences are compared cell by cell; "x% of cells" counts the cells where one network scores higher than the other.
 
 ## How CeSpGRN works, in short
@@ -35,7 +39,7 @@ All numbers are 8000 cells, one seed, noise 0.01, unless stated otherwise. Diffe
 
 ![The paper's Figure 2](ablation/figures/paper_fig2.png)
 
-**Figure 1.** The paper's Fig. 2 (Zhang et al. 2026, p. 6). (a) Accuracy when only TF information is given. (b) Accuracy with scATAC-seq: CeSpGRN (ATAC) reaches AUPRC 0.76 and early precision 0.69 at noise 0.01, far above the other methods. The paper does not show the ATAC prior on its own.
+**Figure 2.** The paper's Fig. 2 (Zhang et al. 2026, p. 6). (a) Accuracy when only TF information is given. (b) Accuracy with scATAC-seq: CeSpGRN (ATAC) reaches AUPRC 0.76 and early precision 0.69 at noise 0.01, far above the other methods. The paper does not show the ATAC prior on its own.
 
 ## Experiments
 
@@ -45,7 +49,7 @@ We rebuilt the benchmark (the code that made it is not published, see [Setup](#s
 
 ![Fig. 2b redrawn on our rebuild](ablation/figures/fig2b_rebuilt.png)
 
-**Figure 2.** Fig. 2b redrawn with the authors' own plotting code, adding the prior on its own. Bars are the mean over 8000 cells, error bars one standard deviation, paper's AUPRC. Two chromatin settings: the simulator's default (most chromatin closed, a weaker prior) and more open chromatin (our main setting, closest to the paper).
+**Figure 3.** Fig. 2b redrawn with the authors' own plotting code, adding the prior on its own. Bars are the mean over 8000 cells, error bars one standard deviation, paper's AUPRC. Two chromatin settings: the simulator's default (most chromatin closed, a weaker prior) and more open chromatin (our main setting, closest to the paper).
 
 | 8000 cells, noise 0.01 | Paper's AUPRC | Standard AUPRC | Early precision |
 |---|---|---|---|
@@ -64,7 +68,7 @@ We shuffled each gene's expression across cells and ran CeSpGRN with the real pr
 
 ![Experiment 3](ablation/figures/exp3_shuffled_rna.png)
 
-**Figure 3.** CeSpGRN with real and shuffled RNA, both with the real prior. Left: standard AUPRC over the whole network, next to the prior alone. Right: standard AUPRC over only the edges the prior allows, next to a random order. Mean over 8000 cells, error bars one standard deviation.
+**Figure 4.** CeSpGRN with real and shuffled RNA, both with the real prior. Left: standard AUPRC over the whole network, next to the prior alone. Right: standard AUPRC over only the edges the prior allows, next to a random order. Mean over 8000 cells, error bars one standard deviation.
 
 ### 4. Penalty or cut: which one does the work? · done
 
@@ -72,7 +76,7 @@ CeSpGRN uses the prior twice: as a penalty in its equation (what the paper descr
 
 ![Experiment 4](ablation/figures/exp4_penalty_vs_cut.png)
 
-**Figure 4.** CeSpGRN with neither, one or both uses of the prior. Mean over 8000 cells, error bars one standard deviation.
+**Figure 5.** CeSpGRN with neither, one or both uses of the prior. Mean over 8000 cells, error bars one standard deviation.
 
 ### 5. Worse priors · done
 
@@ -82,7 +86,7 @@ The per-cell prior does help: one prior shared by all cells scores lower (0.38 v
 
 ![Experiment 5](ablation/figures/exp5_worse_priors.png)
 
-**Figure 5.** CeSpGRN and its prior alone, for the real per-cell prior and three worse ones. Left the paper's AUPRC, right standard AUPRC. Mean over 8000 cells, error bars one standard deviation.
+**Figure 6.** CeSpGRN and its prior alone, for the real per-cell prior and three worse ones. Left the paper's AUPRC, right standard AUPRC. Mean over 8000 cells, error bars one standard deviation.
 
 ### 6. Inside the prior: does the RNA order the allowed edges? · done
 
@@ -90,7 +94,7 @@ Among the edges the prior allows, 74% are true. We score only those edges: does 
 
 ![Experiment 6](ablation/figures/exp6_inside_prior.png)
 
-**Figure 6.** Standard AUPRC counted only over the edges the prior allows. "Random order" is the share of true edges among them, which is what a random ordering scores. Mean over 8000 cells, error bars one standard deviation.
+**Figure 7.** Standard AUPRC counted only over the edges the prior allows. "Random order" is the share of true edges among them, which is what a random ordering scores. Mean over 8000 cells, error bars one standard deviation.
 
 ### 7. A simple baseline with the same prior · done
 
@@ -98,7 +102,7 @@ We gave plain correlation the same prior and cut, in two versions: the correlati
 
 ![Experiment 7](ablation/figures/exp7_correlation.png)
 
-**Figure 7.** CeSpGRN next to two correlation baselines that get the same prior and cut, and the prior alone. Mean over 8000 cells, error bars one standard deviation.
+**Figure 8.** CeSpGRN next to two correlation baselines that get the same prior and cut, and the prior alone. Mean over 8000 cells, error bars one standard deviation.
 
 ### 8. Standard AUPRC · done
 
@@ -106,7 +110,7 @@ On the paper's AUPRC the prior alone scores higher than CeSpGRN. With standard A
 
 ![Experiment 8](ablation/figures/exp8_standard_auprc.png)
 
-**Figure 8.** The paper's AUPRC next to standard AUPRC, for CeSpGRN and the prior alone, in both chromatin settings. Mean over 8000 cells, error bars one standard deviation.
+**Figure 9.** The paper's AUPRC next to standard AUPRC, for CeSpGRN and the prior alone, in both chromatin settings. Mean over 8000 cells, error bars one standard deviation.
 
 Not run: a sweep over β (the paper's Fig. S4a already shows it is flat), GENIE3 as a second baseline (experiment 7 is clear without it), noise 0.1, and more seeds.
 
