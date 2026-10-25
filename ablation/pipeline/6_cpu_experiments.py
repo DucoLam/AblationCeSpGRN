@@ -7,7 +7,8 @@ ties; experiment 8). The upper triangle is used for the standard AUPRC; upstream
     --exp 4  soft penalty vs hard cut, 2 x 2: neither (β = 0), cut only (β = 0, then the prior cut),
              penalty only (β = 1 without the cut), both (β = 1 with the cut, as the paper)
     --exp 6  scores counted only inside the prior: among the edges the prior allows, does the RNA
-             put the true ones first? Baseline is the share of true edges inside the prior.
+             put the true ones first? Baseline is the expected AUPRC of a random order of those edges
+             (exact, from the number of allowed and true edges); the share of true edges is also kept.
     --exp 7  plain correlation with the same prior and cut: global Pearson correlation of the
              log-normalised RNA, and (--kernel) CeSpGRN's own input, the kernel-weighted Kendall
              correlation per cell, averaged over the same 4 bandwidths
@@ -58,15 +59,22 @@ def score(G, G_gt, model, njobs):
     return scores
 
 
+def random_order_ap(n, m):
+    # expected average precision of a uniformly random order of n items with m true:
+    # a true item at rank k has precision (1 + expected other true items above it) / k
+    k = np.arange(1, n + 1)
+    return np.mean((1 + (k - 1) * (m - 1) / max(n - 1, 1)) / k)
+
+
 def _inside_prior(args):
     G_inf, G_gt, allowed = args
     keep = allowed[UPPER]
     y, s = G_gt[UPPER][keep] != 0, np.abs(G_inf[UPPER][keep])
     if not y.any():
-        return np.nan, np.nan, np.nan
+        return np.nan, np.nan, np.nan, np.nan
     k = int(y.sum())
     top = np.argsort(-s, kind="stable")[:k]
-    return average_precision_score(y, s), y[top].mean(), y.mean()
+    return average_precision_score(y, s), y[top].mean(), y.mean(), random_order_ap(len(y), k)
 
 
 def score_inside_prior(G, G_gt, allowed, model, njobs):
@@ -75,7 +83,7 @@ def score_inside_prior(G, G_gt, allowed, model, njobs):
     rows = np.array(rows)
     return pd.DataFrame({"time": np.arange(len(G)), "model": model,
                          "AUPRC inside prior": rows[:, 0], "Top-k precision inside prior": rows[:, 1],
-                         "Share true inside prior (baseline)": rows[:, 2]})
+                         "Share true inside prior": rows[:, 2], "Random order AUPRC inside prior": rows[:, 3]})
 
 
 def ensemble_without_cut(run_dir):

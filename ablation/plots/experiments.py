@@ -74,7 +74,7 @@ finish(fig, ax, "Penalty or cut: which one does the work?", os.path.join(out_dir
 
 # Experiment 6
 scores = load(MAIN, 6)
-base = scores[scores["model"] == "CeSpGRN (paper)"].assign(**{"model": "Random order", "AUPRC inside prior": lambda d: d["Share true inside prior (baseline)"]})
+base = scores[scores["model"] == "CeSpGRN (paper)"].assign(**{"model": "Random order", "AUPRC inside prior": lambda d: d["Random order AUPRC inside prior"]})
 names = {"CeSpGRN (paper)": "CeSpGRN", "RNA only (beta 0)": "CeSpGRN without prior", "Random order": "Random order"}
 data = pd.concat([scores, base])
 data = data[data["model"].isin(names)].replace({"model": names})
@@ -121,7 +121,7 @@ whole = pd.concat([
 inside = pd.concat([
     load(MAIN, 6).query("model == 'CeSpGRN (paper)'").assign(model="Real RNA"),
     pd.read_csv(os.path.join(shuffled, "exp6_scores.csv"), index_col=0).query("model == 'CeSpGRN (paper)'").assign(model="Shuffled RNA"),
-    load(MAIN, 6).query("model == 'CeSpGRN (paper)'").assign(**{"model": "Random order", "AUPRC inside prior": lambda d: d["Share true inside prior (baseline)"]}),
+    load(MAIN, 6).query("model == 'CeSpGRN (paper)'").assign(**{"model": "Random order", "AUPRC inside prior": lambda d: d["Random order AUPRC inside prior"]}),
 ], ignore_index=True)
 order = ["Real RNA", "Shuffled RNA", "Prior alone"]
 fig, axes = plt.subplots(1, 2, figsize=(15, 6.5))
