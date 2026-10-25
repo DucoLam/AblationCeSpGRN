@@ -1,0 +1,25 @@
+# GitHub Pages: publishes research.md as the home page (journal.md and ablation/README.md as linked pages).
+# Everything else in the repo (upstream code, our pipeline) is left out of the site.
+title: Does CeSpGRN learn from RNA, or copy its prior?
+description: Ablation study of CeSpGRN (Zhang et al., Bioinformatics 2026)
+exclude:
+  - src
+  - test
+  - data
+  - demo.py
+  - README.md
+  - README.upstream.md
+  - LICENSE
+  - ablation/pipeline
+  - ablation/lib
+  - ablation/slurm
+  - ablation/tools
+  - ablation/plots
+  - ablation/pixi.toml
+  - ablation/pixi.lock
+  - ablation/container_pixi.def
+defaults:
+  - scope:
+      path: "research.md"
+    values:
+      permalink: "/"

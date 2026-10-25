@@ -45,3 +45,6 @@ ablation/data/
 # SLURM logs (ablation/slurm/logs must exist before sbatch)
 ablation/slurm/logs/*
 !ablation/slurm/logs/.gitkeep
+
+# GitHub Pages config (the upstream rule **/_* above would hide it)
+!/_config.yml
