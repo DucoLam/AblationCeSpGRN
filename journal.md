@@ -270,7 +270,7 @@ Fig. 2b and Fig. S3c redrawn from our scores with upstream's own plotting code (
 
 ### 2026-10-24 · Open question: does the benchmark's openness setting drive the headline score?
 
-**Suspicion, not a finding.** Because CeSpGRN can only report edges the prior allows (hard filter), and upstream's AUPRC rewards the prior's recall, the headline AUPRC rises directly with how much simulated chromatin is open. In our runs, changing only scMultiSim's `atac.p_zero` from 0.8 to 0.2 moved CeSpGRN from 0.466 to 0.655 at 8000 cells, with the prior alone moving the same way (0.474 → 0.721). If the authors knew the prior dominates (their code scores the prior alone, but the paper does not report it), dense open chromatin would be the setting that makes CeSpGRN look strongest.
+**Open question, not a finding.** Because CeSpGRN can only report edges the prior allows (hard filter), and upstream's AUPRC rewards the prior's recall, the headline AUPRC rises directly with how much simulated chromatin is open. In our runs, changing only scMultiSim's `atac.p_zero` from 0.8 to 0.2 moved CeSpGRN from 0.466 to 0.655 at 8000 cells, with the prior alone moving the same way (0.474 → 0.721). Their code scores the prior alone, but the paper does not report it.
 
 What we cannot tell: their `atac.p_zero` is unknown. We chose 0.2 because it reproduces their numbers, so the match is circular, and the gap could also come from their noise model, `region.distrib` or ground-truth definition. Real scATAC-seq is typically far sparser than even scMultiSim's default (well over 90% zeros per cell), so a dense setting would also be unrealistic. Asked in the email to the authors (setting 1); revisit when they reply. A neutral way to show it, if needed: CeSpGRN and the prior alone against `atac.p_zero` (0.95, 0.8, 0.5, 0.2). Duco decided not to run it for now.
 
@@ -356,6 +356,30 @@ With shuffled RNA, CeSpGRN equals its prior; the RNA's contribution is ~0.02 sta
 ### 2026-10-25 · Summary figure
 
 `ablation/figures/summary.png` (`ablation/plots/experiments.py`): CeSpGRN + ATAC (0.655 / 0.545 / 0.744), ATAC + shuffled RNA (0.635 / 0.525 / 0.744), ATAC only (0.721 / 0.522 / 0.742), CeSpGRN only (0.024 / 0.024 / 0.015); upstream AUPRC / standard AUPRC / EP, from the exp 8 scores of the main dataset and the shuffled-RNA run. Figure 1 in research.md; the other figures moved up by one.
+
+### 2026-10-25 · Code audit: corrections
+
+Five read-only audits cross-checked the claims against the code, the result CSVs, the paper and the supplement. No bug changes a reported result. Verified by the audits: settings match `test_scmultisim.py`; reusing one solver object, passing a mask with β = 0, and the batched square root each give a difference of exactly 0.0 against upstream's code on synthetic data; the cut and the 16-setting average match upstream; all full-size runs averaged 16 settings ("4 bandwidths, 16 settings" in the logs of 13000276/13000278); every number in research.md recomputes from the per-cell CSVs; all ten figures regenerate pixel-identical; the noise-0.3 prior of exp 5 was built from the `pz0.2` raw simulation (job 13000448's command line).
+
+Corrections made in research.md:
+
+- **Noise.** Supplement Note 1.8: "the noise level measures the amount of false positive connections in the cross-modality relationship matrices (which includes two matrices: the region by TF matrix … and the region by target gene matrix)". Earlier entries (2026-10-23, 2026-10-24) read only the Fig. 2 caption and called the noise unspecified or "region×gene only". Our `--noise links` deviates from Note 1.8 (region×gene only; moves links instead of only adding them); the first rebuild's per-entry mode was closer. Now listed under Limits.
+- **The paper's AUPRC.** `auc(recall, precision)` on sklearn's PR curve: a yes/no prediction scores r(1+p)/2 + (1−r)(p+π)/2, not (1+p)/2 (that holds only at recall 1). Confirmed with sklearn against our measured values. Upstream's comment calls it "the same" as `average_precision_score`. That the paper's figures use it is inferred: `bmk.calc_scores_para` was never published (no `bmk.py`/`cov.py` in any of upstream's 156 commits).
+- **Early precision** uses k = min(#true, #non-zero predicted); when the prior allows fewer edges than there are true ones, CeSpGRN and the prior tie by construction (18% of cells main dataset, 76% default chromatin). "0.744 with real and shuffled RNA" is no evidence on its own.
+- **Exp 6 baseline.** The share of true edges (0.742) is not the expected AUPRC of a random order; the exact value, (1/n) Σ_k [1 + (k−1)(m−1)/(n−1)]/k per cell, is 0.751 (checked against 20,000 simulated orders: 0.7512 vs 0.7513). Exp 6 rerun with it (job 13000607); the RNA's gain inside the prior is 0.03, and shuffled RNA (0.754) is at chance.
+- **Rounding:** CeSpGRN's standard AUPRC 0.5447 is 0.54, not 0.55.
+- **Exp 2** "in every setting the prior scores about as well as CeSpGRN": false for the first rebuild at noise 0.1 (prior about twice as high on upstream AUPRC). On the main dataset the prior is higher on upstream AUPRC in 99.8% of cells.
+- **Exp 4** "penalty only" holds at β = 1; it also penalises the diagonal (masks block it). Cut only is 0.008 below penalty + cut on standard AUPRC (CeSpGRN higher in 72% of cells).
+- **Exp 5** random prior: drawn over all 5,995 gene pairs, so ~89% of its edges are target–target pairs that can never be true; "RNA alone cannot recover the network" now rests on the β = 0 run. Shared prior is also less precise (0.607 vs 0.742).
+- **Exp 7** the "kernel correlation" baseline is the per-cell τ-correlation before the solver's own kernel smoothing (`w_empir_cov`, `src/g_admm.py` ~L498), not exactly the solver's input; global vs per-cell also differs in estimator (Pearson vs weighted Kendall).
+- **Covariance weighting.** `test_scmultisim.py:179` calls `cov.est_cov_para` without `weighted_kt`; the commented-out reference (`src/g_admm.py:123`) defaults to unweighted; ours defaults to weighted, following the paper's Eq. 6. Upstream's `test_scmultisim_ggm.py:190-201` labels the main run "CeSpGRN (GCGM)" next to a separate "GCGM-ori" run, which fits weighted, but this is not proven. Check if needed: one run with `--weighted-kt 0`.
+- **Chromatin settings** `_links` and `_pz0.2_links` are separate realisations: `atac.p_zero` changes the number of ATAC draws and so every later random draw (kinetics, RNA, network rewiring after epoch 1).
+- **The cut**: the paper describes the prior only through the penalty, "to eliminate the impossible connections" (Sec. 2.1); the cut that matters is `test_scmultisim.py:222-225`, the solver's own cut only affects its return value. Earlier entries cite Fig. S3c for "0.76"; S3c is a boxplot (median ~0.75), 0.759 is from Fig. 2b.
+- **Settings table**: ρ = 1.7 is stated in Note 1.1; `calc_kernel_neigh` starts at k = 5 counting the cell itself; 330 regions come from the authors' code, not the paper. 147 region–gene links on seed 0 (one entry above says 148).
+
+Paired cell-by-cell differences are now computed by `ablation/tools/paired_differences.py` instead of an ad-hoc script.
+
+Open, not checked: Fig. 2a reports CeSpGRN (TF) at AUPRC 0.102; on our rebuild the TF prior alone scores 0.617 with upstream's AUPRC, and a random order inside it would be ~0.23, so either the paper's Fig. 2a used another metric or setup, or CeSpGRN (TF) ranks worse than random. One CeSpGRN (TF) run would tell. Also open: scMultiSim's `create.tf.edges = FALSE` has no effect (`R/3.2_dyngrn.R:21` negates a logical index), so a few TF–TF edges and self-loops enter the ground truth; effect well below 0.005 AUPRC, and upstream's data has the same property.
 
 ## Changes to upstream code
 
