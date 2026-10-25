@@ -10,9 +10,11 @@ Figures for the CPU experiments (6_cpu_experiments.py), in the same style as ups
     exp6_inside_prior.png     experiment 6: ranking of the edges inside the prior vs a random order
     exp8_standard_auprc.png   experiment 8: the paper's AUPRC next to standard AUPRC
     exp5_worse_priors.png     experiment 5: CeSpGRN and its prior alone, for the real and three worse priors
+    exp3_shuffled_rna.png     experiment 3: CeSpGRN on real vs shuffled RNA, next to the prior alone
+    exp7_correlation.png      experiment 7: plain and kernel correlation with the same prior and cut
 
-Reads <results>/<dataset>/cpu/exp<N>_scores.csv and, for experiment 5,
-<results>/followup_seed0_pz0.2_links/priors/cpu_<prior>/exp8_scores.csv (copied from DAIC).
+Reads <results>/<dataset>/cpu/exp<N>_scores.csv and, for experiments 3 and 5,
+<results>/followup_seed0_pz0.2_links/{shuffledRNA/cpu,priors/cpu_<prior>}/exp<N>_scores.csv (copied from DAIC).
 Usage (from the repo root): uv run ablation/plots/experiments.py [results dir] [output dir]
 """
 import os
@@ -109,3 +111,39 @@ for ax, (metric, label) in zip(axes, METRICS.items()):
 axes[0].get_legend().remove()
 finish(fig, axes[1], "CeSpGRN follows whatever prior it gets", os.path.join(out_dir, "exp5_worse_priors.png"))
 print("wrote", sorted(f for f in os.listdir(out_dir) if f.startswith("exp")))
+
+# Experiment 3
+shuffled = os.path.join(results, "followup_seed0_pz0.2_links", "shuffledRNA", "cpu")
+whole = pd.concat([
+    load(MAIN, 8).replace({"model": {"CeSpGRN (ATAC)": "Real RNA", "Prior (ATAC)": "Prior alone"}}),
+    pd.read_csv(os.path.join(shuffled, "exp8_scores.csv"), index_col=0).replace({"model": {"CeSpGRN (ATAC)": "Shuffled RNA"}}),
+], ignore_index=True)
+inside = pd.concat([
+    load(MAIN, 6).query("model == 'CeSpGRN (paper)'").assign(model="Real RNA"),
+    pd.read_csv(os.path.join(shuffled, "exp6_scores.csv"), index_col=0).query("model == 'CeSpGRN (paper)'").assign(model="Shuffled RNA"),
+    load(MAIN, 6).query("model == 'CeSpGRN (paper)'").assign(**{"model": "Random order", "AUPRC inside prior": lambda d: d["Share true inside prior (baseline)"]}),
+], ignore_index=True)
+order = ["Real RNA", "Shuffled RNA", "Prior alone"]
+fig, axes = plt.subplots(1, 2, figsize=(15, 6.5))
+barplot(axes[0], whole[whole["model"].isin(order)], "model", "AUPRC (standard)", None, order)
+axes[0].set_title("Whole network", fontsize=17)
+axes[0].set_ylabel("Standard AUPRC")
+order_in = ["Real RNA", "Shuffled RNA", "Random order"]
+barplot(axes[1], inside, "model", "AUPRC inside prior", None, order_in)
+axes[1].set_title("Only the edges the prior allows", fontsize=17)
+axes[1].set_ylabel("Standard AUPRC, inside the prior")
+axes[1].set_ylim(0, 1.0)
+finish(fig, axes[1], "CeSpGRN with the RNA's signal destroyed", os.path.join(out_dir, "exp3_shuffled_rna.png"))
+
+# Experiment 7
+exp7 = load(MAIN, 7).dropna(subset=["AUPRC (abs)"])
+names = {"Correlation + cut": "Plain correlation + cut", "Kernel correlation + cut": "Per-cell correlation + cut"}
+base = load(MAIN, 8).replace({"model": {"CeSpGRN (ATAC)": "CeSpGRN", "Prior (ATAC)": "Prior alone"}})
+data = pd.concat([base[base["model"].isin(["CeSpGRN", "Prior alone"])], exp7.replace({"model": names})], ignore_index=True)
+data = data.melt(id_vars="model", value_vars=list(METRICS), var_name="metric", value_name="score").replace({"metric": METRICS})
+order = ["CeSpGRN", "Plain correlation + cut", "Per-cell correlation + cut", "Prior alone"]
+fig, ax = plt.subplots(figsize=(13, 6.5))
+barplot(ax, data, "model", "score", "metric", order)
+ax.set_ylabel("Score")
+finish(fig, ax, "A simple baseline with the same prior and cut", os.path.join(out_dir, "exp7_correlation.png"))
+print("wrote exp3 and exp7")

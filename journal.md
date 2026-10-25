@@ -335,6 +335,24 @@ CeSpGRN tracks its prior in every case: about 0.02 above it on standard AUPRC, b
 
 **How.** CeSpGRN runs from FALCON's job 13000448 (`run_followup.sh ... links`, results in `ablation/results/scmultisim/followup_seed0_pz0.2_links/priors/beta_1_<prior>/`). Standard AUPRC and inside-prior scores: job 13000547 (`6_cpu_experiments.py --exp 8/6 --prior <prior>`, output in `priors/cpu_<prior>/`). Figure `ablation/figures/exp5_worse_priors.png` (`ablation/plots/experiments.py`).
 
+### 2026-10-25 · Experiments 3 and 7 at full size: the RNA adds ~0.02, plain correlation beats CeSpGRN
+
+**Finding (8000 cells, main dataset `pz0.2_links`).** Upstream AUPRC / EP / standard AUPRC; inside-prior standard AUPRC:
+
+| Network | AUPRC | EP | Standard AUPRC | Inside prior |
+|---|---|---|---|---|
+| CeSpGRN, real RNA | 0.655 | 0.744 | 0.545 | 0.781 |
+| CeSpGRN, shuffled RNA (exp 3) | 0.635 | 0.744 | 0.525 | 0.754 |
+| Global correlation + cut (exp 7) | 0.685 | 0.750 | 0.576 | 0.818 |
+| Kernel (per-cell) correlation + cut (exp 7) | 0.643 | 0.743 | 0.536 | 0.762 |
+| Prior (ATAC) alone | 0.721 | 0.742 | 0.522 | 0.742 (share true) |
+
+Paired per-cell differences in standard AUPRC (mean, SD, share of cells > 0): real − prior +0.023, 0.026, 81%; real − shuffled +0.019, 0.035, 71%; shuffled − prior +0.004, 0.024, 55%; global correlation − real +0.032, 0.025, 90%; kernel correlation − real −0.009, 0.022, 35%. Cells are not independent (neighbourhood smoothing), so no p-values.
+
+With shuffled RNA, CeSpGRN equals its prior; the RNA's contribution is ~0.02 standard AUPRC, all of it in the ordering of edges inside the prior. A global correlation over all cells with the same prior and cut beats CeSpGRN; CeSpGRN's own per-cell input with the cut is about level with CeSpGRN, so the solver adds little and per-cell estimation does worse than ignoring cell differences.
+
+**How.** Exp 3: CeSpGRN run in FALCON's job 13000448 (`run_followup.sh`, results `ablation/results/scmultisim/followup_seed0_pz0.2_links/shuffledRNA/beta_1_atac/`, 6:41 h for the whole job), rescored with `6_cpu_experiments.py --exp 8/6` in job 13000591 (output `shuffledRNA/cpu/`). Exp 7: job 13000545 (1:35 h, `--exp 7 --kernel`, output `<main results>/cpu/exp7_scores.csv`). Paired differences computed locally from the copied per-cell CSVs. Figures `exp3_shuffled_rna.png`, `exp7_correlation.png` (`ablation/plots/experiments.py`).
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
