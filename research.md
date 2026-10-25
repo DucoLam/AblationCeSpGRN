@@ -26,7 +26,7 @@ All numbers are 8000 cells, one seed, noise 0.01, unless stated otherwise. Diffe
 
 - **Input:** gene expression (RNA) for every cell, and per cell a **prior**: the TF → gene links that the cell's open chromatin (ATAC) allows.
 - **Method:** for each cell, CeSpGRN estimates a network from the RNA of that cell and its neighbours (cells with similar expression). A penalty with weight β pushes it away from edges outside the prior.
-- **A step the paper doesn't mention:** after solving, the code sets every edge outside the prior to zero. So the output can only contain edges the prior allows. We call this **the cut**.
+- **A step the paper doesn't mention:** after solving, the code sets every edge outside the prior to zero ([`src/g_admm.py` L654–659](https://github.com/PeterZZQ/CeSpGRN/blob/2fb222f8a26edf1bdae14a95b1491543f0aaa4e8/src/g_admm.py#L654-L659), and again on the averaged network in [`test_scmultisim.py` L222–225](https://github.com/PeterZZQ/CeSpGRN/blob/2fb222f8a26edf1bdae14a95b1491543f0aaa4e8/test/scripts_scmultisim/test_scmultisim.py#L222-L225)). So the output can only contain edges the prior allows. We call this **the cut**.
 - **Output:** the average of 16 runs (4 neighbourhood bandwidths × 4 sparsity levels), one network per cell.
 
 **How we score**, per cell against the true network, then averaged over cells:
@@ -60,7 +60,7 @@ We rebuilt the benchmark (the code that made it is not published, see [Setup](#s
 
 ### 2. Score the prior on its own · done
 
-The authors' evaluation code scores the prior on its own, but the paper does not report it. In every setting we tried, the prior alone scores about as well as CeSpGRN with that prior (Figure 2): 0.72 vs 0.66 on the paper's AUPRC and 0.74 vs 0.74 on early precision. With the default chromatin both are 0.47.
+The authors' evaluation code scores the prior on its own ([`eval_scores.py` L77–94](https://github.com/PeterZZQ/CeSpGRN/blob/2fb222f8a26edf1bdae14a95b1491543f0aaa4e8/test/scripts_scmultisim/eval_scores.py#L77-L94) for the ATAC prior, [L39–41](https://github.com/PeterZZQ/CeSpGRN/blob/2fb222f8a26edf1bdae14a95b1491543f0aaa4e8/test/scripts_scmultisim/eval_scores.py#L39-L41) for the TF prior), but the paper does not report it. In every setting we tried, the prior alone scores about as well as CeSpGRN with that prior (Figure 3): 0.72 vs 0.66 on the paper's AUPRC and 0.74 vs 0.74 on early precision. With the default chromatin both are 0.47.
 
 ### 3. Shuffled RNA · done
 
