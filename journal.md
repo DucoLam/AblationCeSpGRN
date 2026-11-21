@@ -381,6 +381,24 @@ Paired cell-by-cell differences are now computed by `ablation/tools/paired_diffe
 
 Open, not checked: Fig. 2a reports CeSpGRN (TF) at AUPRC 0.102; on our rebuild the TF prior alone scores 0.617 with upstream's AUPRC, and a random order inside it would be ~0.23, so either the paper's Fig. 2a used another metric or setup, or CeSpGRN (TF) ranks worse than random. One CeSpGRN (TF) run would tell. Also open: scMultiSim's `create.tf.edges = FALSE` has no effect (`R/3.2_dyngrn.R:21` negates a logical index), so a few TF–TF edges and self-loops enter the ground truth; effect well below 0.005 AUPRC, and upstream's data has the same property.
 
+### 2026-11-21 · The authors sent their simulation script: the ground truth is filtered by the prior
+
+**Source.** Ziqi Zhang replied (via Xiuwei Zhang) with `simulate_scmultisim.R` and `GRN_params_100.txt`; scMultiSim 1.0.0 from GitHub at commit `8dc531f` (2023-05-11), R 4.2.0. The script is not in this repo (shared by email); `1_simulate.R` profile `authors` and `2_build_dataset.py --noise authors` follow it.
+
+**Finding.** Per cell, the script (1) links a TF to a region when the cell's true network says so (`region_to_gene %*% cell_specific_grn > 0`), (2) zeroes the closed regions (ATAC count 0), (3) saves as ground truth the true network multiplied by the resulting TF-target mask, and (4) saves as prior the same mask after adding Bernoulli(fp) false links to the region × TF matrix, redrawn per cell, in open and closed regions. So the noise-free prior equals the set of edges the ground truth may contain: recall 1 by construction. The paper does not describe step 3 (Note 1.8, Fig. S1), and Note 1.8 puts the noise in both cross-modality matrices; the script adds it to region × TF only.
+
+scMultiSim uses ATAC only for the kinetic parameter k_on (`R/2_sim.R:83-105` at `8dc531f`), not to switch TF edges off, so the RNA is generated from the unfiltered network.
+
+**Settings that differ from our rebuild.** 500 CIFs (ours 20), `intrinsic.noise` 0.5 (ours default 1), `create.tf.edges = TRUE`, default `atac.p_zero` 0.8 (our main dataset used 0.2), and the dataset name is `{changing edges}_{steps}_{cells per step}`: 10 steps of 100 cells (we had 100 steps of 10 cells).
+
+**Unclear.** As sent, the script is set to "GRN inference with TF" (20 changing edges, 10 steps, fp 0.1, seed 2); the commented-out block labelled scATAC-seq uses 3 changing edges and 80 steps, a dataset name (`simulated_8000_3_80_100_…`) that appears nowhere in upstream, whose scripts all read `simulated_8000_20_10_100_*`. We use 20/10/100. The script writes `scenicplus/grn_gts/…`, another layout than `test_scmultisim.py` reads, so it is not exactly the script that made the paper's files.
+
+**400-cell check (seed 0).** Our Python build reproduces the R code's filtered ground truth exactly (assert in `2_build_dataset.py`). With the container's scMultiSim 1.6.0: 13,862 of 58,000 true (cell, edge) pairs kept; prior precision / recall 0.66 / 1.00 at fp 0.01 and 0.27 / 1.00 at fp 0.1. With the authors' 1.0.0: 13,403 kept, 0.715 / 1.00 at fp 0.01. The two versions give different RNA (mean count 113 vs 72) and networks for the same seed, so the main run uses 1.0.0.
+
+**How.** Prep job 13057692 (1.6.0), then `1_simulate.R 0 raw/cells400_seed0_authors_v1 400 0.8 authors` and `2_build_dataset.py --noise authors` on the login node (1.0.0). scMultiSim `8dc531f` installed into `ablation/data/rlib_authors` with `R CMD INSTALL`; `roxygen2` and `KernelKnn` removed from its DESCRIPTION/NAMESPACE (docs only; KernelKnn is used only by velocity-benchmark functions and cannot load in the container, missing `libopenblas.so.0`). R is 4.5.3, not the authors' 4.2.0.
+
+**Submitted (8000 cells, seed 0, fp 0.01, branch `feature/authors-benchmark`).** Prep 13057695; experiment 1 (β 1 and 0) GPU 13057696; experiments 3 + 5 (random, shared, noise-0.1 prior; shuffled RNA) GPU 13057697; experiments 4, 6, 8 CPU 13057698; experiment 7 CPU 13057699; rescoring of 3 + 5 CPU 13057700. Results in `ablation/results/scmultisim/simulated_8000_20_10_100_0.01_0_0_4_authors/` and `followup_seed0_authors/`. The noisier prior is 0.1 (the paper's second noise level) instead of 0.3, since per-entry 0.3 on region × TF allows nearly every TF edge. FALCON paused and held its pending GPU jobs meanwhile.
+
 ## Changes to upstream code
 
 Kept minimal, so `git diff upstream/master -- src test demo.py` shows them all.
