@@ -13,6 +13,10 @@
 #     bash ablation/slurm/submit_reproduction.sh                                # small CPU test run
 #   P_ZERO=0.2 NOISE=links SEEDS=0 bash ablation/slurm/submit_reproduction.sh  # rebuilt prior
 #
+#   PROFILE=authors SEEDS=0 FPS=0.01 bash ablation/slurm/submit_reproduction.sh # the authors' own simulation and prior rule
+#
+# PROFILE=authors uses the settings and the ground-truth/prior rule of the authors' simulate_scmultisim.R
+# (1_simulate.R profile "authors", 2_build_dataset.py --noise authors); directory names get _authors.
 # P_ZERO is scMultiSim's atac.p_zero (default 0.8), NOISE the noise mode of 2_build_dataset.py (default
 # per-entry). Non-default values add _pz<P_ZERO> and _<NOISE> to the raw and dataset directory names.
 
@@ -22,11 +26,14 @@ NUM_CELLS=${NUM_CELLS:-8000}
 SEEDS=${SEEDS:-"0 1 2"}
 FPS=${FPS:-"0.01 0.1"}
 P_ZERO=${P_ZERO:-0.8}
+PROFILE=${PROFILE:-rebuild}
 NOISE=${NOISE:-per-entry}
+[ "$PROFILE" = authors ] && NOISE=authors
 pz_suffix=""
+[ "$PROFILE" = authors ] && pz_suffix="_authors"
 [ "$P_ZERO" = 0.8 ] || pz_suffix="_pz${P_ZERO}"
 noise_suffix=""
-[ "$NOISE" = per-entry ] || noise_suffix="_${NOISE}"
+[ "$NOISE" = per-entry ] || [ "$NOISE" = authors ] || noise_suffix="_${NOISE}"
 GPU=${GPU:-1}
 # resources for each dataset job
 QOS=${QOS:-medium}
@@ -53,7 +60,7 @@ for seed in $SEEDS; do
 
   # simulate and build only the datasets that are missing, all in one CPU job
   steps=()
-  [ -f "$raw/grn_edges.tsv" ] || steps+=("Rscript ablation/pipeline/1_simulate.R $seed $raw $NUM_CELLS $P_ZERO")
+  [ -f "$raw/grn_edges.tsv" ] || steps+=("Rscript ablation/pipeline/1_simulate.R $seed $raw $NUM_CELLS $P_ZERO $PROFILE")
   for fp in $FPS; do
     data=$(dataset "$fp" "$seed")
     [ -f "$data/prior_stats.json" ] || \
@@ -62,7 +69,7 @@ for seed in $SEEDS; do
   dep=()
   if [ ${#steps[@]} -gt 0 ]; then
     prep=$(JOB_DESC="Simulate seed $seed (${NUM_CELLS} cells, atac.p_zero $P_ZERO) if missing, and build its datasets for noise $FPS ($NOISE noise)" \
-      submit -J "prep-s${seed}${pz_suffix}${noise_suffix}" --qos=short --time=01:00:00 --cpus-per-task=2 --mem=32G \
+      submit -J "prep-s${seed}${pz_suffix}${noise_suffix}" --qos=short --time=${PREP_TIME:-01:00:00} --cpus-per-task=2 --mem=${PREP_MEM:-32G} \
       ablation/slurm/run.sh bash -c "set -e; $(IFS=';'; echo "${steps[*]}")")
     dep=(--dependency=afterok:"$prep")
     echo "seed $seed: prepare data $prep"

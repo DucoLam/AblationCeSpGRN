@@ -19,6 +19,14 @@ Noise (fp), only in the copies used for the prior, the same for all cells:
     --noise links      a share fp of the real region-gene links is moved to random wrong pairs:
                        "the error rate of the association between the chromatin regions and genes"
                        (Fig. 2 caption). RT stays noise-free.
+    --noise authors    the authors' own rule (their simulate_scmultisim.R, received 2026-11-21), which
+                       also changes the ground truth. Per cell, with G_i the signed gene x TF network:
+                           RT_i     = 1[ RG . G_i > 0 ], closed regions set to 0
+                           truth_i  = G_i restricted to 1[ RG^T . RT_i > 0 ]   (edges behind a closed
+                                      region are removed from the ground truth)
+                           prior_i  = 1[ RG^T . (RT_i + Bernoulli(fp)) > 0 ]   (noise drawn per cell,
+                                      on every region x TF entry, open or closed; RG stays noise-free)
+                       So without noise the prior is exactly the set of TF-target pairs the truth may use.
 
 Outputs match what upstream's scripts compute from their text files:
     counts_rna_true.npy  (cells x genes)
@@ -48,14 +56,16 @@ def main():
     parser.add_argument("--fp", type=float, required=True, help="noise level, e.g. 0.01 or 0.1")
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--region-tf", choices=["per-cell", "global"], default="per-cell")
-    parser.add_argument("--noise", choices=["per-entry", "links"], default="per-entry")
+    parser.add_argument("--noise", choices=["per-entry", "links", "authors"], default="per-entry")
     args = parser.parse_args()
     os.makedirs(args.out, exist_ok=True)
 
     counts = pd.read_csv(os.path.join(args.raw, "counts_rna_true.tsv"), sep="\t", index_col=0).T.values
     atac = pd.read_csv(os.path.join(args.raw, "counts_atac_true.tsv"), sep="\t", index_col=0).T.values
-    region_gene = read_matrix(os.path.join(args.raw, "region_to_gene.tsv")) > 0
-    region_tf_global = read_matrix(os.path.join(args.raw, "region_to_tf.tsv")) > 0
+    region_gene_w = read_matrix(os.path.join(args.raw, "region_to_gene.tsv")).astype(np.float64)
+    region_gene = region_gene_w > 0
+    if args.region_tf == "global":
+        region_tf_global = read_matrix(os.path.join(args.raw, "region_to_tf.tsv")) > 0
     regulators = pd.read_csv(os.path.join(args.raw, "regulators.tsv"), sep="\t")["regulator"].values - 1
     edges = pd.read_csv(os.path.join(args.raw, "grn_edges.tsv"), sep="\t")
 
@@ -71,13 +81,37 @@ def main():
     targets = edges["target"].values - 1
     regs = edges["regulator"].values - 1
     geff[cells, targets, [reg_col[r] for r in regs]] = edges["weight"].values
+    is_open = atac > 0
+    rng = np.random.default_rng([args.seed, round(args.fp * 1e6)])
+
+    if args.noise == "authors":
+        # the authors' ground truth and prior, see the module docstring
+        assert (region_gene_w >= 0).all()
+        prior_gene_tf_all = np.zeros((ncells, ngenes, nregs), dtype=bool)
+        for i in range(ncells):
+            grn = geff[i].astype(np.float64)
+            region_tf_open = ((region_gene_w @ grn) > 0) & is_open[i][:, None]
+            geff[i] *= (region_gene_w.T @ region_tf_open) > 0
+            noisy = region_tf_open + (rng.random((nregions, nregs)) < args.fp)
+            prior_gene_tf_all[i] = (region_gene_w.T @ noisy) > 0
+        # must equal the ground truth the authors' R code wrote in 1_simulate.R
+        ref = pd.read_csv(os.path.join(args.raw, "grn_edges_corrected.tsv"), sep="\t")
+        ref_geff = np.zeros_like(geff)
+        ref_geff[ref["cell"].values - 1, ref["target"].values - 1,
+                 [reg_col[r] for r in ref["regulator"].values - 1]] = ref["weight"].values
+        assert np.array_equal(ref_geff != 0, geff != 0) and np.allclose(ref_geff, geff), \
+            "ground truth differs from the authors' R code"
+        n_all = len(edges)
+        print(f"authors' ground truth: kept {int((geff != 0).sum())} of {n_all} (cell, edge) pairs; matches the R code")
+
     graph_gt = np.zeros((ncells, ngenes, ngenes), dtype=np.float32)
     graph_gt[:, :, regulators] = geff
     graph_gt = graph_gt + graph_gt.transpose(0, 2, 1)
 
     # Noise on the copies of the cross-modality matrices used for the prior
-    rng = np.random.default_rng([args.seed, round(args.fp * 1e6)])
-    if args.noise == "per-entry":
+    if args.noise == "authors":
+        pass
+    elif args.noise == "per-entry":
         region_gene_noisy = region_gene | (rng.random(region_gene.shape) < args.fp)
         region_tf_noise = rng.random((nregions, nregs)) < args.fp
     else:
@@ -90,18 +124,20 @@ def main():
         region_tf_noise = np.zeros((nregions, nregs), dtype=bool)
         print(f"moved {n_moved} of {len(links)} region-gene links")
 
-    is_open = atac > 0
     masks_atac = np.ones((ncells, ngenes, ngenes), dtype=np.uint8)
     stats = {"precision": [], "recall": [], "density": []}
     upper = np.triu_indices(ngenes, k=1)
     for i in range(ncells):
-        if args.region_tf == "per-cell":
-            region_tf = (region_gene.astype(np.int32) @ (geff[i] > 0).astype(np.int32)) > 0
+        if args.noise == "authors":
+            prior_gene_tf = prior_gene_tf_all[i]
         else:
-            region_tf = region_tf_global
-        region_tf = region_tf | region_tf_noise
-        open_i = is_open[i]
-        prior_gene_tf = (region_gene_noisy[open_i].T.astype(np.int32) @ region_tf[open_i].astype(np.int32)) > 0
+            if args.region_tf == "per-cell":
+                region_tf = (region_gene.astype(np.int32) @ (geff[i] > 0).astype(np.int32)) > 0
+            else:
+                region_tf = region_tf_global
+            region_tf = region_tf | region_tf_noise
+            open_i = is_open[i]
+            prior_gene_tf = (region_gene_noisy[open_i].T.astype(np.int32) @ region_tf[open_i].astype(np.int32)) > 0
         prior = np.zeros((ngenes, ngenes), dtype=bool)
         prior[:, regulators] = prior_gene_tf
         prior = prior | prior.T
