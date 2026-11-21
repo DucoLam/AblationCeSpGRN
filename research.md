@@ -10,11 +10,20 @@ Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeS
 
 The authors sent us the script that generates their simulated benchmark. It shows something the paper does not describe: **the ground truth is filtered with the same rule that builds the prior.**
 
-![How the authors' script builds the ground truth and the prior](ablation/figures/authors_ground_truth.png)
+![What the benchmark script does for one cell, step by step](ablation/figures/authors_steps.png)
 
-- **The simulator's network** has about 145 TF–gene edges per cell, and the RNA is generated from all of them.
-- **The ground truth** keeps only the edges that run through an open chromatin region, about 23% of them. The rest are deleted and count as false, although they still shaped the RNA.
-- **The prior** is that same set of edges, plus random edges added as noise. So before noise, the prior and the ground truth are identical: the prior finds every true edge by construction, and its precision depends only on how much noise is added (0.72 at noise level 0.01).
+**What the script does, per cell** (toy example with two TFs and four genes):
+
+1. **Simulate.** The simulator gives the cell a true network and generates its RNA from all of that network's edges.
+2. **Look at the chromatin.** About 80% of the regions are closed in each cell.
+3. **Rewrite the ground truth.** Every true edge behind a closed region is deleted. What is left is saved as the ground truth.
+4. **Build the prior.** The prior is that same set of edges, plus random edges added as noise.
+
+**Why this is a problem.** Steps 3 and 4 use the same rule, so before noise the prior and the ground truth are identical. The prior finds every true edge by construction, and its precision depends only on how much noise is added. And the deleted edges still shaped the RNA, so a method that finds them is right about the cell but scored as wrong.
+
+In numbers, on a 400-cell check: about 145 true edges per cell, of which 23% are kept as ground truth; the prior is those plus about 13 noise edges (precision 0.72 at noise level 0.01).
+
+![The same in numbers: edges per cell](ablation/figures/authors_ground_truth.png)
 
 What this means: on this benchmark, a method that returns its prior scores well without using the RNA, and a method that reads the RNA correctly is penalised for edges that were removed from the ground truth. That fits our main result below, and it replaces our guess about open chromatin: the authors use the simulator's default (80% of regions closed), not the more open setting we chose to match their scores.
 
