@@ -6,6 +6,20 @@ We ask where that gain comes from: does CeSpGRN learn the network from the RNA, 
 
 Paper: Zhang et al., *Bioinformatics* 42(6), btag324 (2026). Code: [PeterZZQ/CeSpGRN](https://github.com/PeterZZQ/CeSpGRN) `v1.0.0`. The detailed log, with dates, job IDs and code references, is in [`journal.md`](journal.md).
 
+## Update, 21 November 2026: the authors' own benchmark script
+
+The authors sent us the script that generates their simulated benchmark. It shows something the paper does not describe: **the ground truth is filtered with the same rule that builds the prior.**
+
+![How the authors' script builds the ground truth and the prior](ablation/figures/authors_ground_truth.png)
+
+- **The simulator's network** has about 145 TF–gene edges per cell, and the RNA is generated from all of them.
+- **The ground truth** keeps only the edges that run through an open chromatin region, about 23% of them. The rest are deleted and count as false, although they still shaped the RNA.
+- **The prior** is that same set of edges, plus random edges added as noise. So before noise, the prior and the ground truth are identical: the prior finds every true edge by construction, and its precision depends only on how much noise is added (0.72 at noise level 0.01).
+
+What this means: on this benchmark, a method that returns its prior scores well without using the RNA, and a method that reads the RNA correctly is penalised for edges that were removed from the ground truth. That fits our main result below, and it replaces our guess about open chromatin: the authors use the simulator's default (80% of regions closed), not the more open setting we chose to match their scores.
+
+Status: these numbers come from a 400-cell check (seed 0, noise 0.01, the authors' scMultiSim version), in which our code reproduces the ground truth of the authors' R code exactly. **Everything below this section was run on our own rebuild of the benchmark, before we had the script.** We are rerunning all eight experiments at 8000 cells on the authors' setup; details are in [`journal.md`](journal.md).
+
 ## Main result
 
 **CeSpGRN's accuracy comes from the ATAC prior and a hard cut on edges outside it, not from its use of the RNA.**
