@@ -31,6 +31,7 @@ Noise (fp), only in the copies used for the prior, the same for all cells:
 Outputs match what upstream's scripts compute from their text files:
     counts_rna_true.npy  (cells x genes)
     graph_gt.npy         (cells x genes x genes), symmetric, as G_gt + G_gt.T
+    graph_gt_full.npy    (--noise authors only) the simulator's network before the authors' filter
     masks_atac.npy       (cells x genes x genes), 1 = edge not allowed
     masks_tf.npy         (cells x genes x genes), 1 = target-target edge
     prior_stats.json     precision and recall of the prior against the ground truth
@@ -88,6 +89,11 @@ def main():
         # the authors' ground truth and prior, see the module docstring
         assert (region_gene_w >= 0).all()
         prior_gene_tf_all = np.zeros((ncells, ngenes, nregs), dtype=bool)
+        # scMultiSim's own network, before the authors' filter, to compare the two as ground truth
+        graph_full = np.zeros((ncells, ngenes, ngenes), dtype=np.float32)
+        graph_full[:, :, regulators] = geff
+        np.save(os.path.join(args.out, "graph_gt_full.npy"), graph_full + graph_full.transpose(0, 2, 1))
+        del graph_full
         for i in range(ncells):
             grn = geff[i].astype(np.float64)
             region_tf_open = ((region_gene_w @ grn) > 0) & is_open[i][:, None]
