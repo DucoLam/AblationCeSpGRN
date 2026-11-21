@@ -42,7 +42,7 @@ def main():
     parser.add_argument("--raw", required=True)
     parser.add_argument("--seed", type=int, required=True)
     parser.add_argument("--noise", type=float, default=0.3)
-    parser.add_argument("--noise-mode", choices=["per-entry", "links"], default="per-entry",
+    parser.add_argument("--noise-mode", choices=["per-entry", "links", "authors"], default="per-entry",
                         help="2_build_dataset.py --noise; use the mode the dataset was built with")
     args = parser.parse_args()
     rng = np.random.default_rng(args.seed)
